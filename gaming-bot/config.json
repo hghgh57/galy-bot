@@ -1,0 +1,70 @@
+{
+  "supportRoleIds": ["PUT_SUPPORT_ROLE_ID_HERE"],
+  "ticketCategoryId": "PUT_DISCORD_CATEGORY_CHANNEL_ID_HERE",
+  "transcriptLogChannelId": "PUT_LOG_CHANNEL_ID_HERE",
+  "welcomeChannelId": "PUT_WELCOME_CHANNEL_ID_HERE",
+  "maxOpenTicketsPerUser": 1,
+  "closeCountdownSeconds": 5,
+  "panel": {
+    "title": "🎫 Support Tickets",
+    "description": "Select a category below to open a ticket.",
+    "color": "#5865F2",
+    "footer": "We usually respond within a few hours"
+  },
+  "categories": [
+    {
+      "id": "support",
+      "label": "Support",
+      "description": "General help or questions",
+      "emoji": "🧩"
+    },
+    {
+      "id": "giveaway_sponsor",
+      "label": "Giveaway Sponsor",
+      "description": "Sponsor a giveaway",
+      "emoji": "🎁"
+    },
+    {
+      "id": "giveaway_claim",
+      "label": "Giveaway Claim",
+      "description": "Claim a giveaway you won",
+      "emoji": "💰"
+    },
+    {
+      "id": "spawner_sell",
+      "label": "Spawner Sell",
+      "description": "Sell spawners to staff",
+      "emoji": "🛠️"
+    },
+    {
+      "id": "spawner_buy",
+      "label": "Spawner Buy",
+      "description": "Buy spawners off staff",
+      "emoji": "🚀"
+    },
+    {
+      "id": "partnership",
+      "label": "Partnership",
+      "description": "Apply for a server partnership",
+      "emoji": "🤝"
+    }
+  ],
+  "applications": [
+    {
+      "id": "staff",
+      "label": "Staff Application",
+      "description": "Apply to become staff",
+      "emoji": "🛡️",
+      "color": "#5865F2",
+      "reviewChannelId": "PUT_STAFF_REVIEW_CHANNEL_ID_HERE",
+      "questions": [
+        "What is your age?",
+        "What timezone are you in?",
+        "Why do you want to be staff?",
+        "Do you have prior moderation experience?",
+        "How many hours a week can you dedicate?",
+        "Anything else you'd like to add?"
+      ]
+    }
+  ]
+}
