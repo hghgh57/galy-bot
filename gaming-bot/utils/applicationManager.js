@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { EmbedBuilder } = require('discord.js');
 
 const pendingAnswers = new Map();
@@ -20,6 +22,40 @@ function clearPartial(userId, appId) {
   pendingAnswers.delete(keyFor(userId, appId));
 }
 
+// Persisted record of who has a pending (not-yet-decided) application,
+// so they can't select the dropdown and submit a second one while waiting.
+const APPLIED_FILE = path.join(__dirname, '..', 'applied.json');
+
+function loadApplied() {
+  if (!fs.existsSync(APPLIED_FILE)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(APPLIED_FILE, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+function saveApplied(data) {
+  fs.writeFileSync(APPLIED_FILE, JSON.stringify(data, null, 2));
+}
+
+function hasApplied(userId, appId) {
+  const data = loadApplied();
+  return Boolean(data[keyFor(userId, appId)]);
+}
+
+function markApplied(userId, appId) {
+  const data = loadApplied();
+  data[keyFor(userId, appId)] = true;
+  saveApplied(data);
+}
+
+function clearApplied(userId, appId) {
+  const data = loadApplied();
+  delete data[keyFor(userId, appId)];
+  saveApplied(data);
+}
+
 function buildApplicationEmbed(member, appConfig, answers) {
   const embed = new EmbedBuilder()
     .setTitle(`📋 New Application: ${appConfig.label}`)
@@ -36,4 +72,12 @@ function buildApplicationEmbed(member, appConfig, answers) {
   return embed;
 }
 
-module.exports = { savePartial, getPartial, clearPartial, buildApplicationEmbed };
+module.exports = {
+  savePartial,
+  getPartial,
+  clearPartial,
+  hasApplied,
+  markApplied,
+  clearApplied,
+  buildApplicationEmbed,
+};
