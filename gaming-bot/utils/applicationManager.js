@@ -1,7 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
 
-// Temporary in-memory storage for answers collected from the first modal
-// while we wait for the user to submit the second modal (6th question).
 const pendingAnswers = new Map();
 
 function keyFor(userId, appId) {
@@ -11,7 +9,6 @@ function keyFor(userId, appId) {
 function savePartial(userId, appId, answers) {
   const key = keyFor(userId, appId);
   pendingAnswers.set(key, answers);
-  // Auto-expire after 10 minutes in case they never finish the second modal
   setTimeout(() => pendingAnswers.delete(key), 10 * 60 * 1000);
 }
 
@@ -28,6 +25,7 @@ function buildApplicationEmbed(member, appConfig, answers) {
     .setTitle(`📋 New Application: ${appConfig.label}`)
     .setColor(appConfig.color || '#5865F2')
     .setThumbnail(member.user.displayAvatarURL())
+    .addFields({ name: 'Applicant', value: `${member} (${member.user.tag})`, inline: false })
     .setFooter({ text: `User ID: ${member.id}` })
     .setTimestamp();
 
