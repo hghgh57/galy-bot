@@ -5,12 +5,16 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  EmbedBuilder,
 } = require('discord.js');
 const { createTicket, claimTicket, closeTicket } = require('../utils/ticketManager');
 const {
   savePartial,
   getPartial,
   clearPartial,
+  hasApplied,
+  markApplied,
+  clearApplied,
   buildApplicationEmbed,
 } = require('../utils/applicationManager');
 const config = require('../config.json');
@@ -21,7 +25,7 @@ function buildQuestionModal(customId, title, questions) {
   questions.forEach((question, i) => {
     const input = new TextInputBuilder()
       .setCustomId(`q${i}`)
-      .setLabel(question.slice(0, 45)) // Discord label limit is 45 chars
+      .setLabel(question.slice(0, 45))
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true)
       .setMaxLength(1000);
@@ -32,15 +36,41 @@ function buildQuestionModal(customId, title, questions) {
   return modal;
 }
 
+function buildDecisionRow(userId, appId, disabled = false) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`app_accept_${userId}_${appId}`)
+      .setLabel('Accept')
+      .setEmoji('✅')
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(disabled),
+    new ButtonBuilder()
+      .setCustomId(`app_deny_${userId}_${appId}`)
+      .setLabel('Deny')
+      .setEmoji('❌')
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(disabled)
+  );
+}
+
+function isSupport(member) {
+  const roleIds = config.supportRoleIds || [];
+  return roleIds.some((id) => id && !id.startsWith('PUT_') && member.roles.cache.has(id));
+}
+
 async function submitApplication(interaction, appId, appConfig, fullAnswers) {
   clearPartial(interaction.user.id, appId);
+  markApplied(interaction.user.id, appId);
 
   const embed = buildApplicationEmbed(interaction.member, appConfig, fullAnswers);
   const reviewChannel = await interaction.guild.channels
     .fetch(appConfig.reviewChannelId)
     .catch(() => null);
 
-  if (reviewChannel) await reviewChannel.send({ embeds: [embed] });
+  if (reviewChannel) {
+    const row = buildDecisionRow(interaction.user.id, appId);
+    await reviewChannel.send({ embeds: [embed], components: [row] });
+  }
   await interaction.reply({ content: '✅ Your application has been submitted!', ephemeral: true });
 }
 
@@ -48,7 +78,6 @@ module.exports = {
   name: 'interactionCreate',
   async execute(interaction) {
     try {
-      // Slash commands
       if (interaction.isChatInputCommand()) {
         const command = interaction.client.commands.get(interaction.commandName);
         if (!command) return;
@@ -56,20 +85,25 @@ module.exports = {
         return;
       }
 
-      // Dropdown: ticket category selection -> create ticket
       if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_category_select') {
         const categoryId = interaction.values[0];
         await createTicket(interaction, categoryId);
         return;
       }
 
-      // Dropdown: application selection -> show first modal (questions 1-5)
       if (interaction.isStringSelectMenu() && interaction.customId === 'application_select') {
         const appId = interaction.values[0];
         const appConfig = (config.applications || []).find((a) => a.id === appId);
 
         if (!appConfig) {
           return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
+        }
+
+        if (hasApplied(interaction.user.id, appId)) {
+          return interaction.reply({
+            content: 'You already have a pending application for this. Please wait for a decision before applying again.',
+            ephemeral: true,
+          });
         }
 
         const firstFive = appConfig.questions.slice(0, 5);
@@ -83,7 +117,6 @@ module.exports = {
         return;
       }
 
-      // Buttons
       if (interaction.isButton()) {
         if (interaction.customId === 'ticket_claim') {
           await claimTicket(interaction);
@@ -113,8 +146,6 @@ module.exports = {
           return;
         }
 
-        // Continue button -> opens the second modal (question 6+)
-        // Buttons ARE allowed to show a modal, unlike modal submissions.
         if (interaction.customId.startsWith('application_continue_')) {
           const appId = interaction.customId.replace('application_continue_', '');
           const appConfig = (config.applications || []).find((a) => a.id === appId);
@@ -132,19 +163,59 @@ module.exports = {
           await interaction.showModal(modal2);
           return;
         }
+
+        if (interaction.customId.startsWith('app_accept_') || interaction.customId.startsWith('app_deny_')) {
+          const isAccept = interaction.customId.startsWith('app_accept_');
+          const prefix = isAccept ? 'app_accept_' : 'app_deny_';
+          const rest = interaction.customId.replace(prefix, '');
+          const [applicantId, appId] = rest.split('_');
+
+          if (!isSupport(interaction.member)) {
+            return interaction.reply({
+              content: 'Only staff can accept or deny applications.',
+              ephemeral: true,
+            });
+          }
+
+          const appConfig = (config.applications || []).find((a) => a.id === appId);
+          const label = appConfig ? appConfig.label : 'Application';
+
+          const originalEmbed = interaction.message.embeds[0];
+          const updatedEmbed = EmbedBuilder.from(originalEmbed)
+            .setColor(isAccept ? '#57F287' : '#ED4245')
+            .setFooter({
+              text: `${isAccept ? 'Accepted' : 'Denied'} by ${interaction.user.tag}`,
+            });
+
+          await interaction.update({
+            embeds: [updatedEmbed],
+            components: [buildDecisionRow(applicantId, appId, true)],
+          });
+
+          if (!isAccept) {
+            clearApplied(applicantId, appId);
+          }
+
+          const applicant = await interaction.guild.members.fetch(applicantId).catch(() => null);
+          if (applicant) {
+            await applicant
+              .send(
+                isAccept
+                  ? `🎉 Your **${label}** application in **${interaction.guild.name}** was accepted!`
+                  : `Your **${label}** application in **${interaction.guild.name}** was denied.`
+              )
+              .catch(() => {});
+          }
+          return;
+        }
       }
 
-      // Modal submit: ticket close with reason
       if (interaction.isModalSubmit() && interaction.customId === 'ticket_close_reason_modal') {
         const reason = interaction.fields.getTextInputValue('close_reason_input');
         await closeTicket(interaction, reason);
         return;
       }
 
-      // Modal submit: application step 1 (questions 1-5)
-      // Discord does NOT allow showing a modal directly from a modal submission,
-      // so instead we save the answers and reply with a "Continue" button.
-      // Clicking that button (a normal button interaction) is allowed to open modal 2.
       if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal1_')) {
         const appId = interaction.customId.replace('application_modal1_', '');
         const appConfig = (config.applications || []).find((a) => a.id === appId);
@@ -182,7 +253,6 @@ module.exports = {
         return;
       }
 
-      // Modal submit: application step 2 (final question) -> combine + submit
       if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal2_')) {
         const appId = interaction.customId.replace('application_modal2_', '');
         const appConfig = (config.applications || []).find((a) => a.id === appId);
