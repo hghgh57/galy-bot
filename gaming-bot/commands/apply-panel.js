@@ -3,18 +3,20 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
+  PermissionFlagsBits,
 } = require('discord.js');
 const config = require('../config.json');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('apply')
-    .setDescription('Apply for a position'),
+    .setName('apply-panel')
+    .setDescription('Post the application panel with a dropdown')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
   async execute(interaction) {
     const apps = config.applications || [];
     if (apps.length === 0) {
-      return interaction.reply({ content: 'No applications are open right now.', ephemeral: true });
+      return interaction.reply({ content: 'No applications are configured yet.', ephemeral: true });
     }
 
     const embed = new EmbedBuilder()
@@ -35,6 +37,8 @@ module.exports = {
       );
 
     const row = new ActionRowBuilder().addComponents(menu);
-    await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+
+    await interaction.channel.send({ embeds: [embed], components: [row] });
+    await interaction.reply({ content: 'Application panel posted.', ephemeral: true });
   },
 };
