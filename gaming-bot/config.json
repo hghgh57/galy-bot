@@ -1,10 +1,10 @@
 {
   "supportRoleIds": ["PUT_SUPPORT_ROLE_ID_HERE"],
-  "ticketCategoryId": "PUT_DISCORD_CATEGORY_CHANNEL_ID_HERE",
-  "transcriptLogChannelId": "PUT_LOG_CHANNEL_ID_HERE",
-  "welcomeChannelId": "PUT_WELCOME_CHANNEL_ID_HERE",
-  "maxOpenTicketsPerUser": 1,
-  "closeCountdownSeconds": 5,
+  "ticketCategoryId": "1527923229480583409",
+  "transcriptLogChannelId": "1527245695612878998",
+  "welcomeChannelId": "1526915443326062735",
+  "maxOpenTicketsPerUser": 2,
+  "closeCountdownSeconds": 2,
   "panel": {
     "title": "🎫 Support Tickets",
     "description": "Select a category below to open a ticket.",
@@ -56,7 +56,7 @@
       "description": "Apply to become staff",
       "emoji": "🛡️",
       "color": "#5865F2",
-      "reviewChannelId": "PUT_STAFF_REVIEW_CHANNEL_ID_HERE",
+      "reviewChannelId": "1526936497092296935",
       "questions": [
         "What is your age?",
         "What timezone are you in?",
