@@ -192,9 +192,7 @@ module.exports = {
             components: [buildDecisionRow(applicantId, appId, true)],
           });
 
-          if (!isAccept) {
-            clearApplied(applicantId, appId);
-          }
+          clearApplied(applicantId, appId);
 
           const applicant = await interaction.guild.members.fetch(applicantId).catch(() => null);
           if (applicant) {
