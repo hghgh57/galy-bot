@@ -118,6 +118,25 @@ module.exports = {
       }
 
       if (interaction.isButton()) {
+        if (interaction.customId.startsWith('rr_')) {
+          const roleId = interaction.customId.replace('rr_', '');
+          const member = interaction.member;
+
+          const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
+          if (!role) {
+            return interaction.reply({ content: 'That role no longer exists.', ephemeral: true });
+          }
+
+          if (member.roles.cache.has(roleId)) {
+            await member.roles.remove(roleId).catch(() => {});
+            await interaction.reply({ content: `Removed the **${role.name}** role.`, ephemeral: true });
+          } else {
+            await member.roles.add(roleId).catch(() => {});
+            await interaction.reply({ content: `Gave you the **${role.name}** role!`, ephemeral: true });
+          }
+          return;
+        }
+
         if (interaction.customId === 'ticket_claim') {
           await claimTicket(interaction);
           return;
