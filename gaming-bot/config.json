@@ -66,5 +66,27 @@
         "Anything else you'd like to add?"
       ]
     }
-  ]
+  ],
+  "reactionRoles": {
+    "title": "🎭 Get Your Roles",
+    "description": "Click a button below to add or remove that role.",
+    "color": "#5865F2",
+    "roles": [
+      {
+        "roleId": "1526927178749448354",
+        "label": "spawner price ping",
+        "emoji": "📢"
+      },
+      {
+        "roleId": "1526927249604083904",
+        "label": "Giveaway ping",
+        "emoji": "🎉"
+      },
+      {
+        "roleId": "1526927287486779566",
+        "label": "quickdrop pings",
+        "emoji": "🎁"
+      }
+    ]
+  }
 }
