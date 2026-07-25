@@ -1,5 +1,11 @@
+const { EmbedBuilder } = require('discord.js');
 const { getSticky, updateLastMessageId } = require('../utils/stickyManager');
 const { addXpForMessage } = require('../utils/levelManager');
+
+function buildProgressBar(current, needed, length = 20) {
+  const filled = Math.round((current / needed) * length);
+  return '█'.repeat(filled) + '░'.repeat(length - filled);
+}
 
 module.exports = {
   name: 'messageCreate',
@@ -8,9 +14,16 @@ module.exports = {
 
     const xpResult = addXpForMessage(message.author.id);
     if (xpResult && xpResult.leveledUp) {
-      await message.channel
-        .send(`🎉 ${message.author} leveled up to **level ${xpResult.newLevel}**!`)
-        .catch(() => {});
+      const bar = buildProgressBar(xpResult.xp, xpResult.xpNeeded);
+
+      const embed = new EmbedBuilder()
+        .setDescription(
+          `🎉 ${message.author} leveled up from **level ${xpResult.oldLevel}** to **level ${xpResult.newLevel}**!\n\n` +
+            `\`${bar}\`\n${xpResult.xp} / ${xpResult.xpNeeded} XP`
+        )
+        .setColor('#5865F2');
+
+      await message.channel.send({ embeds: [embed] }).catch(() => {});
     }
 
     const sticky = getSticky(message.channel.id);
