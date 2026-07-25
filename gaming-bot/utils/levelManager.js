@@ -44,6 +44,7 @@ function addXpForMessage(userId) {
   }
 
   user.lastMessage = now;
+  const oldLevel = user.level;
   const gained = Math.floor(Math.random() * (MAX_XP_PER_MESSAGE - MIN_XP_PER_MESSAGE + 1)) + MIN_XP_PER_MESSAGE;
   user.xp += gained;
 
@@ -57,7 +58,7 @@ function addXpForMessage(userId) {
   }
 
   saveLevels(data);
-  return { leveledUp, newLevel: user.level };
+  return { leveledUp, oldLevel, newLevel: user.level, xp: user.xp, xpNeeded: needed };
 }
 
 function getRank(userId) {
