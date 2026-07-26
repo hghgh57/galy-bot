@@ -5,6 +5,11 @@
   "transcriptLogChannelId": "1527245695612878998",
   "welcomeChannelId": "1526915443326062735",
   "levelUpChannelId": "1530801281369641113",
+  "levelRoles": [
+  { "level": 5, "roleId": "PUT_ROLE_ID_HERE" },
+  { "level": 10, "roleId": "PUT_ROLE_ID_HERE" },
+  { "level": 20, "roleId": "PUT_ROLE_ID_HERE" }
+],
   "minecraftServerIp": "donutsmp.net",
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
