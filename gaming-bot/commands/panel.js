@@ -3,17 +3,20 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
-  PermissionFlagsBits,
 } = require('discord.js');
 const config = require('../config.json');
+const { isAdmin } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ticket-panel')
-    .setDescription('Post the ticket creation panel with a category dropdown')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+    .setDescription('Post the ticket creation panel with a category dropdown'),
 
   async execute(interaction) {
+    if (!isAdmin(interaction.member)) {
+      return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+    }
+
     const embed = new EmbedBuilder()
       .setTitle(config.panel.title)
       .setDescription(config.panel.description)
