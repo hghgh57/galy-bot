@@ -3,17 +3,20 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
-  PermissionFlagsBits,
 } = require('discord.js');
 const config = require('../config.json');
+const { isAdmin } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('apply-panel')
-    .setDescription('Post the application panel with a dropdown')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+    .setDescription('Post the application panel with a dropdown'),
 
   async execute(interaction) {
+    if (!isAdmin(interaction.member)) {
+      return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+    }
+
     const apps = config.applications || [];
     if (apps.length === 0) {
       return interaction.reply({ content: 'No applications are configured yet.', ephemeral: true });
