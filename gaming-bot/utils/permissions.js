@@ -5,4 +5,9 @@ function isAdmin(member) {
   return roleIds.some((id) => id && !id.startsWith('PUT_') && member.roles.cache.has(id));
 }
 
-module.exports = { isAdmin };
+function isMod(member) {
+  const roleIds = config.modRoleIds || [];
+  return roleIds.some((id) => id && !id.startsWith('PUT_') && member.roles.cache.has(id));
+}
+
+module.exports = { isAdmin, isMod };
