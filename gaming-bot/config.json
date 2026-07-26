@@ -6,9 +6,10 @@
   "welcomeChannelId": "1526915443326062735",
   "levelUpChannelId": "1530801281369641113",
   "levelRoles": [
-  { "level": 5, "roleId": "PUT_ROLE_ID_HERE" },
-  { "level": 10, "roleId": "PUT_ROLE_ID_HERE" },
-  { "level": 20, "roleId": "PUT_ROLE_ID_HERE" }
+  { "level": 5, "roleId": "1530876340583268424" },
+  { "level": 10, "roleId": "1530877245202235503" },
+  { "level": 15, "roleId": "1530877718550544384" },
+  { "level": 30, "roleId": "1530877819801043155" }
 ],
   "minecraftServerIp": "donutsmp.net",
   "maxOpenTicketsPerUser": 2,
