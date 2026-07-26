@@ -274,4 +274,65 @@ module.exports = {
         const appConfig = (config.applications || []).find((a) => a.id === appId);
 
         if (!appConfig) {
-          return interaction.reply({ content: 'That
+          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
+        }
+
+        const answers = [];
+        for (let i = 0; i < 5; i++) {
+          answers.push(interaction.fields.getTextInputValue(`q${i}`));
+        }
+        savePartial(interaction.user.id, appId, answers);
+
+        const remaining = appConfig.questions.slice(5);
+
+        if (remaining.length === 0) {
+          const fullAnswers = getPartial(interaction.user.id, appId);
+          await submitApplication(interaction, appId, appConfig, fullAnswers);
+          return;
+        }
+
+        const continueRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`application_continue_${appId}`)
+            .setLabel('Continue Application')
+            .setStyle(ButtonStyle.Primary)
+        );
+
+        await interaction.reply({
+          content: 'Almost done! Click below to answer the last question.',
+          components: [continueRow],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal2_')) {
+        const appId = interaction.customId.replace('application_modal2_', '');
+        const appConfig = (config.applications || []).find((a) => a.id === appId);
+
+        if (!appConfig) {
+          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
+        }
+
+        const firstFive = getPartial(interaction.user.id, appId) || [];
+        const remainingCount = appConfig.questions.length - 5;
+        const lastAnswers = [];
+        for (let i = 0; i < remainingCount; i++) {
+          lastAnswers.push(interaction.fields.getTextInputValue(`q${i}`));
+        }
+
+        const fullAnswers = [...firstFive, ...lastAnswers];
+        await submitApplication(interaction, appId, appConfig, fullAnswers);
+        return;
+      }
+    } catch (err) {
+      console.error('Error handling interaction:', err);
+      const errMsg = { content: 'Something went wrong handling that action.', ephemeral: true };
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp(errMsg).catch(() => {});
+      } else {
+        await interaction.reply(errMsg).catch(() => {});
+      }
+    }
+  },
+};
