@@ -5,6 +5,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
   EmbedBuilder,
 } = require('discord.js');
 const { createTicket, claimTicket, closeTicket } = require('../utils/ticketManager');
@@ -17,6 +18,7 @@ const {
   clearApplied,
   buildApplicationEmbed,
 } = require('../utils/applicationManager');
+const { getBalance, transfer } = require('../utils/economyManager');
 const config = require('../config.json');
 
 function buildQuestionModal(customId, title, questions) {
@@ -58,6 +60,37 @@ function isSupport(member) {
   return roleIds.some((id) => id && !id.startsWith('PUT_') && member.roles.cache.has(id));
 }
 
+async function resetTicketDropdown(message) {
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId('ticket_category_select')
+    .setPlaceholder('Select a ticket category…')
+    .addOptions(
+      config.categories.map((cat) => ({
+        label: cat.label,
+        description: cat.description,
+        value: cat.id,
+        emoji: cat.emoji || undefined,
+      }))
+    );
+  await message.edit({ components: [new ActionRowBuilder().addComponents(menu)] }).catch(() => {});
+}
+
+async function resetApplicationDropdown(message) {
+  const apps = config.applications || [];
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId('application_select')
+    .setPlaceholder('Select an application…')
+    .addOptions(
+      apps.map((app) => ({
+        label: app.label,
+        description: app.description,
+        value: app.id,
+        emoji: app.emoji || undefined,
+      }))
+    );
+  await message.edit({ components: [new ActionRowBuilder().addComponents(menu)] }).catch(() => {});
+}
+
 async function submitApplication(interaction, appId, appConfig, fullAnswers) {
   clearPartial(interaction.user.id, appId);
   markApplied(interaction.user.id, appId);
@@ -88,6 +121,7 @@ module.exports = {
       if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_category_select') {
         const categoryId = interaction.values[0];
         await createTicket(interaction, categoryId);
+        await resetTicketDropdown(interaction.message);
         return;
       }
 
@@ -96,10 +130,12 @@ module.exports = {
         const appConfig = (config.applications || []).find((a) => a.id === appId);
 
         if (!appConfig) {
+          await resetApplicationDropdown(interaction.message);
           return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
         }
 
         if (hasApplied(interaction.user.id, appId)) {
+          await resetApplicationDropdown(interaction.message);
           return interaction.reply({
             content: 'You already have a pending application for this. Please wait for a decision before applying again.',
             ephemeral: true,
@@ -114,10 +150,61 @@ module.exports = {
         );
 
         await interaction.showModal(modal);
+        await resetApplicationDropdown(interaction.message);
         return;
       }
 
       if (interaction.isButton()) {
+        if (interaction.customId.startsWith('duel_accept_') || interaction.customId.startsWith('duel_decline_')) {
+          const isAccept = interaction.customId.startsWith('duel_accept_');
+          const prefix = isAccept ? 'duel_accept_' : 'duel_decline_';
+          const [challengerId, opponentId, amountStr] = interaction.customId.replace(prefix, '').split('_');
+          const amount = parseInt(amountStr, 10);
+
+          if (interaction.user.id !== opponentId) {
+            return interaction.reply({ content: 'Only the challenged user can respond to this duel.', ephemeral: true });
+          }
+
+          if (!isAccept) {
+            await interaction.update({
+              content: null,
+              embeds: [EmbedBuilder.from(interaction.message.embeds[0]).setDescription('Duel declined.').setColor('#2F3136')],
+              components: [],
+            });
+            return;
+          }
+
+          const challengerBalance = getBalance(challengerId);
+          const opponentBalance = getBalance(opponentId);
+
+          if (challengerBalance < amount || opponentBalance < amount) {
+            await interaction.update({
+              content: null,
+              embeds: [
+                EmbedBuilder.from(interaction.message.embeds[0])
+                  .setDescription("Duel cancelled — one of you no longer has enough coins for this wager.")
+                  .setColor('#2F3136'),
+              ],
+              components: [],
+            });
+            return;
+          }
+
+          const challengerWins = Math.random() < 0.5;
+          const winnerId = challengerWins ? challengerId : opponentId;
+          const loserId = challengerWins ? opponentId : challengerId;
+
+          transfer(loserId, winnerId, amount);
+
+          const resultEmbed = new EmbedBuilder()
+            .setTitle('⚔️ Duel Result')
+            .setDescription(`<@${winnerId}> won the duel and took **${amount} coins** from <@${loserId}>!`)
+            .setColor('#57F287');
+
+          await interaction.update({ content: null, embeds: [resultEmbed], components: [] });
+          return;
+        }
+
         if (interaction.customId.startsWith('rr_')) {
           const roleId = interaction.customId.replace('rr_', '');
           const member = interaction.member;
