@@ -4,6 +4,7 @@
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
   "welcomeChannelId": "1526915443326062735",
+  "levelUpChannelId": "PUT_LEVEL_UP_CHANNEL_ID_HERE",
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
   "panel": {
