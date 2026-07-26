@@ -19,6 +19,7 @@ const {
   buildApplicationEmbed,
 } = require('../utils/applicationManager');
 const config = require('../config.json');
+const { loadGiveaways, saveGiveaways } = require('../utils/giveawayManager');
 
 function buildQuestionModal(customId, title, questions) {
   const modal = new ModalBuilder().setCustomId(customId).setTitle(title);
@@ -154,6 +155,29 @@ module.exports = {
       }
 
       if (interaction.isButton()) {
+        if (interaction.customId === 'giveaway_join') {
+          const giveaways = loadGiveaways();
+          const giveaway = giveaways[interaction.message.id];
+
+          if (!giveaway || giveaway.ended) {
+            return interaction.reply({ content: 'This giveaway has ended.', ephemeral: true });
+          }
+
+          const userId = interaction.user.id;
+          const idx = giveaway.entrants.indexOf(userId);
+
+          if (idx === -1) {
+            giveaway.entrants.push(userId);
+            saveGiveaways(giveaways);
+            await interaction.reply({ content: '🎉 You entered the giveaway!', ephemeral: true });
+          } else {
+            giveaway.entrants.splice(idx, 1);
+            saveGiveaways(giveaways);
+            await interaction.reply({ content: 'You left the giveaway.', ephemeral: true });
+          }
+          return;
+        }
+
         if (interaction.customId.startsWith('rr_')) {
           const roleId = interaction.customId.replace('rr_', '');
           const member = interaction.member;
