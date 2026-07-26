@@ -23,13 +23,35 @@ module.exports = {
       }
 
       const bar = buildProgressBar(xpResult.xp, xpResult.xpNeeded);
+      const newlyEarnedRoleNames = [];
 
-      const embed = new EmbedBuilder()
-        .setDescription(
-          `🚀 ${message.author} leveled up from **level ${xpResult.oldLevel}** to **level ${xpResult.newLevel}**!\n\n` +
-            `\`${bar}\`\n${xpResult.xp} / ${xpResult.xpNeeded} XP`
-        )
-        .setColor('#5865F2');
+      const levelRoles = config.levelRoles || [];
+      if (levelRoles.length > 0) {
+        const member = await message.guild.members.fetch(message.author.id).catch(() => null);
+        if (member) {
+          for (const entry of levelRoles) {
+            if (!entry.roleId || entry.roleId.startsWith('PUT_')) continue;
+            if (xpResult.newLevel < entry.level) continue;
+            if (member.roles.cache.has(entry.roleId)) continue;
+
+            const added = await member.roles.add(entry.roleId).catch(() => null);
+            if (added) {
+              const role = message.guild.roles.cache.get(entry.roleId);
+              if (role) newlyEarnedRoleNames.push(role.name);
+            }
+          }
+        }
+      }
+
+      let description =
+        `🚀 ${message.author} leveled up from **level ${xpResult.oldLevel}** to **level ${xpResult.newLevel}**!\n\n` +
+        `\`${bar}\`\n${xpResult.xp} / ${xpResult.xpNeeded} XP`;
+
+      if (newlyEarnedRoleNames.length > 0) {
+        description += `\n\n🎁 New role(s) unlocked: **${newlyEarnedRoleNames.join(', ')}**`;
+      }
+
+      const embed = new EmbedBuilder().setDescription(description).setColor('#5865F2');
 
       await targetChannel.send({ embeds: [embed] }).catch(() => {});
     }
