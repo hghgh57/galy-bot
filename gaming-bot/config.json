@@ -5,6 +5,7 @@
   "transcriptLogChannelId": "1527245695612878998",
   "welcomeChannelId": "1526915443326062735",
   "levelUpChannelId": "1530801281369641113",
+  "minecraftServerIp": "donutsmp.net",
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
   "panel": {
