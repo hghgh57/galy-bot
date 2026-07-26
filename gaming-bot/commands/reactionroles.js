@@ -4,17 +4,20 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionFlagsBits,
 } = require('discord.js');
 const config = require('../config.json');
+const { isAdmin } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('reaction-roles-panel')
-    .setDescription('Post the reaction roles panel with buttons')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
+    .setDescription('Post the reaction roles panel with buttons'),
 
   async execute(interaction) {
+    if (!isAdmin(interaction.member)) {
+      return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+    }
+
     const rr = config.reactionRoles;
     if (!rr || !rr.roles || rr.roles.length === 0) {
       return interaction.reply({ content: 'No reaction roles are configured yet.', ephemeral: true });
