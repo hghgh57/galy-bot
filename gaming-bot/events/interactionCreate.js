@@ -18,7 +18,6 @@ const {
   clearApplied,
   buildApplicationEmbed,
 } = require('../utils/applicationManager');
-const { getBalance, transfer } = require('../utils/economyManager');
 const config = require('../config.json');
 
 function buildQuestionModal(customId, title, questions) {
@@ -155,56 +154,6 @@ module.exports = {
       }
 
       if (interaction.isButton()) {
-        if (interaction.customId.startsWith('duel_accept_') || interaction.customId.startsWith('duel_decline_')) {
-          const isAccept = interaction.customId.startsWith('duel_accept_');
-          const prefix = isAccept ? 'duel_accept_' : 'duel_decline_';
-          const [challengerId, opponentId, amountStr] = interaction.customId.replace(prefix, '').split('_');
-          const amount = parseInt(amountStr, 10);
-
-          if (interaction.user.id !== opponentId) {
-            return interaction.reply({ content: 'Only the challenged user can respond to this duel.', ephemeral: true });
-          }
-
-          if (!isAccept) {
-            await interaction.update({
-              content: null,
-              embeds: [EmbedBuilder.from(interaction.message.embeds[0]).setDescription('Duel declined.').setColor('#2F3136')],
-              components: [],
-            });
-            return;
-          }
-
-          const challengerBalance = getBalance(challengerId);
-          const opponentBalance = getBalance(opponentId);
-
-          if (challengerBalance < amount || opponentBalance < amount) {
-            await interaction.update({
-              content: null,
-              embeds: [
-                EmbedBuilder.from(interaction.message.embeds[0])
-                  .setDescription("Duel cancelled — one of you no longer has enough coins for this wager.")
-                  .setColor('#2F3136'),
-              ],
-              components: [],
-            });
-            return;
-          }
-
-          const challengerWins = Math.random() < 0.5;
-          const winnerId = challengerWins ? challengerId : opponentId;
-          const loserId = challengerWins ? opponentId : challengerId;
-
-          transfer(loserId, winnerId, amount);
-
-          const resultEmbed = new EmbedBuilder()
-            .setTitle('⚔️ Duel Result')
-            .setDescription(`<@${winnerId}> won the duel and took **${amount} coins** from <@${loserId}>!`)
-            .setColor('#57F287');
-
-          await interaction.update({ content: null, embeds: [resultEmbed], components: [] });
-          return;
-        }
-
         if (interaction.customId.startsWith('rr_')) {
           const roleId = interaction.customId.replace('rr_', '');
           const member = interaction.member;
@@ -325,65 +274,4 @@ module.exports = {
         const appConfig = (config.applications || []).find((a) => a.id === appId);
 
         if (!appConfig) {
-          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
-        }
-
-        const answers = [];
-        for (let i = 0; i < 5; i++) {
-          answers.push(interaction.fields.getTextInputValue(`q${i}`));
-        }
-        savePartial(interaction.user.id, appId, answers);
-
-        const remaining = appConfig.questions.slice(5);
-
-        if (remaining.length === 0) {
-          const fullAnswers = getPartial(interaction.user.id, appId);
-          await submitApplication(interaction, appId, appConfig, fullAnswers);
-          return;
-        }
-
-        const continueRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`application_continue_${appId}`)
-            .setLabel('Continue Application')
-            .setStyle(ButtonStyle.Primary)
-        );
-
-        await interaction.reply({
-          content: 'Almost done! Click below to answer the last question.',
-          components: [continueRow],
-          ephemeral: true,
-        });
-        return;
-      }
-
-      if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal2_')) {
-        const appId = interaction.customId.replace('application_modal2_', '');
-        const appConfig = (config.applications || []).find((a) => a.id === appId);
-
-        if (!appConfig) {
-          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
-        }
-
-        const firstFive = getPartial(interaction.user.id, appId) || [];
-        const remainingCount = appConfig.questions.length - 5;
-        const lastAnswers = [];
-        for (let i = 0; i < remainingCount; i++) {
-          lastAnswers.push(interaction.fields.getTextInputValue(`q${i}`));
-        }
-
-        const fullAnswers = [...firstFive, ...lastAnswers];
-        await submitApplication(interaction, appId, appConfig, fullAnswers);
-        return;
-      }
-    } catch (err) {
-      console.error('Error handling interaction:', err);
-      const errMsg = { content: 'Something went wrong handling that action.', ephemeral: true };
-      if (interaction.deferred || interaction.replied) {
-        await interaction.followUp(errMsg).catch(() => {});
-      } else {
-        await interaction.reply(errMsg).catch(() => {});
-      }
-    }
-  },
-};
+          return interaction.reply({ content: 'That
