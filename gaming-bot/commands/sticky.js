@@ -1,11 +1,11 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { setSticky, removeSticky, getSticky } = require('../utils/stickyManager');
+const { SlashCommandBuilder } = require('discord.js');
+const { setSticky, removeSticky, updateLastMessageId } = require('../utils/stickyManager');
+const { isAdmin } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('sticky')
     .setDescription('Manage the sticky message for this channel')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
     .addSubcommand((sub) =>
       sub
         .setName('set')
@@ -19,6 +19,10 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    if (!isAdmin(interaction.member)) {
+      return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+    }
+
     const sub = interaction.options.getSubcommand();
 
     if (sub === 'set') {
@@ -26,7 +30,6 @@ module.exports = {
       setSticky(interaction.channel.id, message);
 
       const sent = await interaction.channel.send(`📌 ${message}`);
-      const { updateLastMessageId } = require('../utils/stickyManager');
       updateLastMessageId(interaction.channel.id, sent.id);
 
       await interaction.reply({ content: 'Sticky message set for this channel.', ephemeral: true });
