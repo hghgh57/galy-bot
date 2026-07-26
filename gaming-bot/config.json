@@ -1,4 +1,5 @@
 {
+  "adminRoleIds": ["PUT_ADMIN_ROLE_ID_HERE"],
   "supportRoleIds": ["1526913504668287026"],
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
