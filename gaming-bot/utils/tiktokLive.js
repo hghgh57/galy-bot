@@ -14,8 +14,16 @@ async function isUserLive(username) {
       redirect: 'follow',
     });
 
-    const finalUrl = res.url || '';
-    return res.ok && finalUrl.includes('/live');
+    if (!res.ok) return false;
+
+    const html = await res.text();
+
+    const statusMatch = html.match(/"status":\s*(\d+)/);
+    if (statusMatch) {
+      return statusMatch[1] === '2';
+    }
+
+    return null;
   } catch (err) {
     console.error(`Failed to check TikTok live status for ${username}:`, err);
     return null;
