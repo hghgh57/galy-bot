@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-
-const DATA_FILE = path.join(__dirname, '..', 'levels.json');
+const DATA_DIR = process.env.DATA_DIR || '/app/data';
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const DATA_FILE = path.join(DATA_DIR, 'levels.json');
 const XP_COOLDOWN_MS = 60 * 1000;
 const MIN_XP_PER_MESSAGE = 15;
 const MAX_XP_PER_MESSAGE = 25;
