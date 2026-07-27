@@ -24,7 +24,9 @@ function clearPartial(userId, appId) {
 
 // Persisted record of who has a pending (not-yet-decided) application,
 // so they can't select the dropdown and submit a second one while waiting.
-const APPLIED_FILE = path.join(__dirname, '..', 'applied.json');
+const DATA_DIR = process.env.DATA_DIR || '/app/data';
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const APPLIED_FILE = path.join(DATA_DIR, 'applied.json');
 
 function loadApplied() {
   if (!fs.existsSync(APPLIED_FILE)) return {};
