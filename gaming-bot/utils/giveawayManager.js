@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-
-const DATA_FILE = path.join(__dirname, '..', 'giveaways.json');
+const DATA_DIR = process.env.DATA_DIR || '/app/data';
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const DATA_FILE = path.join(DATA_DIR, 'giveaways.json');
 
 function loadGiveaways() {
   if (!fs.existsSync(DATA_FILE)) return {};
