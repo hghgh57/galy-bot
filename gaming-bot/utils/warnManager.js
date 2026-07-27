@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_FILE = path.join(__dirname, '..', 'warnings.json');
-
+const DATA_DIR = process.env.DATA_DIR || '/app/data';
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const DATA_FILE = path.join(DATA_DIR, 'warnings.json');
 function loadWarnings() {
   if (!fs.existsSync(DATA_FILE)) return {};
   try {
