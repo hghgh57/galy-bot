@@ -83,10 +83,36 @@ function getLeaderboard(limit = 10) {
     .map(([userId, stats]) => ({ userId, ...stats }));
 }
 
+function adjustXp(userId, amount) {
+  const data = loadLevels();
+  if (!data[userId]) data[userId] = { xp: 0, level: 0, lastMessage: 0 };
+
+  const user = data[userId];
+  user.xp += amount;
+
+  let needed = xpForNextLevel(user.level);
+  while (user.xp >= needed) {
+    user.xp -= needed;
+    user.level += 1;
+    needed = xpForNextLevel(user.level);
+  }
+
+  while (user.xp < 0 && user.level > 0) {
+    user.level -= 1;
+    user.xp += xpForNextLevel(user.level);
+  }
+
+  if (user.xp < 0) user.xp = 0;
+
+  saveLevels(data);
+  return { newLevel: user.level, newXp: user.xp };
+}
+
 module.exports = {
   getUser,
   addXpForMessage,
   getRank,
   getLeaderboard,
   xpForNextLevel,
+  adjustXp,
 };
