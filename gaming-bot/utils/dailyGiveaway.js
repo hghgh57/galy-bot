@@ -79,12 +79,18 @@ async function postDailyGiveaway(client) {
     return;
   }
 
-  const prize = settings.prize || '3m Donut SMP';
+  const prize = settings.prize || '1m Donut SMP';
   const winnerCount = settings.winnerCount || 1;
   const endTimestamp = Date.now() + DAY_MS;
 
   const embed = buildGiveawayEmbed(prize, endTimestamp, winnerCount, 0);
-  const message = await channel.send({ embeds: [embed], components: [buildJoinRow()] }).catch(() => null);
+  const message = await channel
+    .send({
+      content: '@everyone',
+      embeds: [embed],
+      components: [buildJoinRow()],
+    })
+    .catch(() => null);
   if (!message) return;
 
   const giveaways = loadGiveaways();
