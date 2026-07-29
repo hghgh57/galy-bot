@@ -109,6 +109,12 @@
       }
     ]
   },
+  "dailyGiveaway": {
+    "enabled": true,
+    "channelId": "PUT_DAILY_GIVEAWAY_CHANNEL_ID_HERE",
+    "prize": "1m Donut SMP",
+    "winnerCount": 1
+  },
   "antiRaid": {
     "enabled": true,
     "joinThreshold": 5,
