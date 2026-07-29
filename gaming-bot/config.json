@@ -110,10 +110,14 @@
     ]
   },
   "dailyGiveaway": {
-    "enabled": true,
-    "channelId": "PUT_DAILY_GIVEAWAY_CHANNEL_ID_HERE",
-    "prize": "1m Donut SMP",
-    "winnerCount": 1
+  "enabled": true,
+  "channelId": "PUT_DAILY_GIVEAWAY_CHANNEL_ID_HERE",
+  "prize": "1m Donut SMP",
+  "winnerCount": 1,
+  "hour": 23,
+  "minute": 0,
+  "timezone": "Australia/Sydney"
+},
   },
   "antiRaid": {
     "enabled": true,
