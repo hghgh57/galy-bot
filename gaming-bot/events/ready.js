@@ -11,6 +11,7 @@ module.exports = {
     startTikTokPolling(client);
     rearmActiveGiveaways(client);
     announceNewChangelogEntries(client);
+    startDailyGiveawayLoop(client);
 
     const statuses = [
       { name: 'voiddd', type: 2 },
