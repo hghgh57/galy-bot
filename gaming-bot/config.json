@@ -48,4 +48,74 @@
       "emoji": "💰"
     },
     {
-      "id":
+      "id": "spawner_sell",
+      "label": "Spawner Sell",
+      "description": "Sell spawners to staff",
+      "emoji": "🛠️"
+    },
+    {
+      "id": "spawner_buy",
+      "label": "Spawner Buy",
+      "description": "Buy spawners off staff",
+      "emoji": "🚀"
+    },
+    {
+      "id": "partnership",
+      "label": "Partnership",
+      "description": "Apply for a server partnership",
+      "emoji": "🤝"
+    }
+  ],
+  "applications": [
+    {
+      "id": "staff",
+      "label": "Staff Application",
+      "description": "Apply to become staff",
+      "emoji": "🛡️",
+      "color": "#5865F2",
+      "reviewChannelId": "1526936497092296935",
+      "questions": [
+        "What is your minecraft ign?",
+        "What timezone are you in?",
+        "Why do you want to be staff?",
+        "Do you have prior moderation experience?",
+        "What would you do if someone was discrespectful?",
+        "Anything else you'd like to add?"
+      ]
+    }
+  ],
+  "reactionRoles": {
+    "title": "🎭 Get Your Roles",
+    "description": "Click a button below to add or remove that role.",
+    "color": "#5865F2",
+    "roles": [
+      {
+        "roleId": "1526927178749448354",
+        "label": "spawner price ping",
+        "emoji": "📢"
+      },
+      {
+        "roleId": "1526927249604083904",
+        "label": "Giveaway ping",
+        "emoji": "🎉"
+      },
+      {
+        "roleId": "1526927287486779566",
+        "label": "quickdrop pings",
+        "emoji": "🎁"
+      }
+    ]
+  },
+  "antiRaid": {
+    "enabled": true,
+    "joinThreshold": 5,
+    "windowSeconds": 10,
+    "minAccountAgeMinutes": 10,
+    "alertChannelId": "1530947462897078354"
+  },
+  "changelog": [
+    { "version": 8, "title": "Added Antinuke/Raid Protection" },
+    { "version": 9, "title": "Added Update Changelog System" },
+    { "version": 10, "title": "Added Calculator" }
+  ]
+}
