@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { getSticky, updateLastMessageId } = require('../utils/stickyManager');
 const { addXpForMessage } = require('../utils/levelManager');
+const { checkTrap } = require('../utils/trapChannel');
 const config = require('../config.json');
 
 function buildProgressBar(current, needed, length = 20) {
