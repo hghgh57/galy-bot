@@ -79,7 +79,7 @@ async function postDailyGiveaway(client) {
     return;
   }
 
-  const prize = settings.prize || '1m Donut SMP';
+  const prize = settings.prize || '3m Donut SMP';
   const winnerCount = settings.winnerCount || 1;
   const endTimestamp = Date.now() + DAY_MS;
 
