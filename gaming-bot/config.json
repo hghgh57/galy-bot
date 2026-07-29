@@ -6,20 +6,20 @@
   "welcomeChannelId": "1526915443326062735",
   "levelUpChannelId": "1530801281369641113",
   "modRoleIds": ["1526911450466222203"],
-"modLogChannelId": "1530947462897078354",
-"mutedRoleId": "1530947173666259085",
+  "modLogChannelId": "1530947462897078354",
+  "mutedRoleId": "1530947173666259085",
   "levelRoles": [
-  { "level": 5, "roleId": "1530876340583268424" },
-  { "level": 10, "roleId": "1530877245202235503" },
-  { "level": 15, "roleId": "1530877718550544384" },
-  { "level": 30, "roleId": "1530877819801043155" }
-],
+    { "level": 5, "roleId": "1530876340583268424" },
+    { "level": 10, "roleId": "1530877245202235503" },
+    { "level": 15, "roleId": "1530877718550544384" },
+    { "level": 30, "roleId": "1530877819801043155" }
+  ],
   "minecraftServerIp": "donutsmp.net",
   "tiktokAnnounceChannelId": "1495028019436195972",
-"tiktokPingRoleId": "1496446108279242762",
-"tiktokAccounts": [
-  { "username": "voidplier.exe" }
-],
+  "tiktokPingRoleId": "1496446108279242762",
+  "tiktokAccounts": [
+    { "username": "voidplier.exe" }
+  ],
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
   "panel": {
@@ -105,5 +105,14 @@
         "emoji": "🎁"
       }
     ]
-  }
-}
+  },
+  "antiRaid": {
+    "enabled": true,
+    "joinThreshold": 5,
+    "windowSeconds": 10,
+    "minAccountAgeMinutes": 10,
+    "alertChannelId": "1530947462897078354"
+  },
+  "changelog": [
+    { "version": 8, "title": "Added Antinuke/Raid Protection" },
+    {
