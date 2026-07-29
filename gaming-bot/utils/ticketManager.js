@@ -9,8 +9,6 @@ const {
 const config = require('../config.json');
 const { buildTranscript } = require('./transcript');
 
-// Ticket channel topics are tagged like: ticket|<userId>|<categoryId>
-// This lets us recover ticket metadata without a database.
 function parseTopic(topic) {
   if (!topic || !topic.startsWith('ticket|')) return null;
   const [, userId, categoryId] = topic.split('|');
@@ -43,6 +41,10 @@ function buildTicketControlRow(claimed = false) {
       .setEmoji('📝')
       .setStyle(ButtonStyle.Secondary)
   );
+}
+
+function getTicketRoleIds() {
+  return config.ticketRoleIds || [];
 }
 
 async function createTicket(interaction, categoryId) {
@@ -78,7 +80,7 @@ async function createTicket(interaction, categoryId) {
     },
   ];
 
-  for (const roleId of config.supportRoleIds) {
+  for (const roleId of getTicketRoleIds()) {
     if (!roleId || roleId.startsWith('PUT_')) continue;
     permissionOverwrites.push({
       id: roleId,
@@ -116,7 +118,7 @@ async function createTicket(interaction, categoryId) {
     .setColor(config.panel.color || '#5865F2')
     .setTimestamp();
 
-  const mentions = config.supportRoleIds
+  const mentions = getTicketRoleIds()
     .filter((id) => id && !id.startsWith('PUT_'))
     .map((id) => `<@&${id}>`)
     .join(' ');
@@ -137,9 +139,9 @@ async function claimTicket(interaction) {
   }
 
   const member = interaction.member;
-  const isSupport = config.supportRoleIds.some((id) => member.roles.cache.has(id));
-  if (!isSupport && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-    return interaction.reply({ content: 'Only support staff can claim tickets.', ephemeral: true });
+  const isTicketStaff = getTicketRoleIds().some((id) => member.roles.cache.has(id));
+  if (!isTicketStaff && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+    return interaction.reply({ content: 'Only ticket staff can claim tickets.', ephemeral: true });
   }
 
   const embed = new EmbedBuilder()
@@ -159,9 +161,9 @@ async function closeTicket(interaction, reason) {
   }
 
   const member = interaction.member;
-  const isSupport = config.supportRoleIds.some((id) => member.roles.cache.has(id));
+  const isTicketStaff = getTicketRoleIds().some((id) => member.roles.cache.has(id));
   const isOwner = member.id === meta.userId;
-  if (!isSupport && !isOwner && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+  if (!isTicketStaff && !isOwner && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
     return interaction.reply({ content: 'You do not have permission to close this ticket.', ephemeral: true });
   }
 
@@ -177,7 +179,6 @@ async function closeTicket(interaction, reason) {
 
   await interaction.editReply({ embeds: [closeEmbed] });
 
-  // Generate and log transcript before deleting
   try {
     const attachment = await buildTranscript(interaction.channel);
     const logChannelId = config.transcriptLogChannelId;
@@ -202,7 +203,6 @@ async function closeTicket(interaction, reason) {
       }
     }
 
-    // Also try to DM the ticket opener a copy
     const opener = await interaction.guild.members.fetch(meta.userId).catch(() => null);
     if (opener) {
       const dmAttachment = await buildTranscript(interaction.channel);
