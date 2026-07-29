@@ -1,6 +1,7 @@
 {
   "adminRoleIds": ["1526913504668287026"],
   "supportRoleIds": ["1526913504668287026"],
+  "changelogAnnounceChannelId": "1530572775255834696",
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
   "welcomeChannelId": "1526915443326062735",
