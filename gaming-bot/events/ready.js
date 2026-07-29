@@ -1,6 +1,7 @@
 const { startTikTokPolling } = require('../utils/tiktokLive');
 const { rearmActiveGiveaways } = require('../utils/giveawayManager');
 const { announceNewChangelogEntries } = require('../utils/changelogAnnounce');
+const { startDailyGiveawayLoop } = require('../utils/dailyGiveaway');
 
 module.exports = {
   name: 'ready',
