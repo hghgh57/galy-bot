@@ -117,7 +117,6 @@
   "hour": 23,
   "minute": 0,
   "timezone": "Australia/Sydney"
-},
   },
   "antiRaid": {
     "enabled": true,
