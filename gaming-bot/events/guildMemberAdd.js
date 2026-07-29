@@ -1,8 +1,11 @@
 const config = require('../config.json');
+const { checkMemberJoin } = require('../utils/antiRaid');
 
 module.exports = {
   name: 'guildMemberAdd',
   async execute(member) {
+    await checkMemberJoin(member);
+
     const channelId = config.welcomeChannelId;
     if (!channelId || channelId.startsWith('PUT_')) return;
 
