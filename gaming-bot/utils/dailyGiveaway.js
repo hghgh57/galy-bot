@@ -9,6 +9,60 @@ const {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Returns the offset (in minutes) between the given timezone's wall clock and UTC,
+// for the moment `date` represents. Handles DST automatically (e.g. AEDT vs AEST).
+function getZoneOffsetMinutes(date, timeZone) {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const parts = dtf.formatToParts(date).reduce((acc, p) => {
+    if (p.type !== 'literal') acc[p.type] = p.value;
+    return acc;
+  }, {});
+  const asUTC = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour === '24' ? 0 : parts.hour,
+    parts.minute,
+    parts.second
+  );
+  return (asUTC - date.getTime()) / 60000;
+}
+
+// Computes the next UTC timestamp (ms) at which it will be `hour:minute` in `timeZone`.
+function getNextRunTimestamp(hour, minute, timeZone) {
+  const now = new Date();
+  const offsetMinutes = getZoneOffsetMinutes(now, timeZone);
+
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const parts = dtf.formatToParts(now).reduce((acc, p) => {
+    if (p.type !== 'literal') acc[p.type] = p.value;
+    return acc;
+  }, {});
+
+  let targetUTC =
+    Date.UTC(parts.year, parts.month - 1, parts.day, hour, minute, 0) - offsetMinutes * 60000;
+
+  if (targetUTC <= now.getTime()) {
+    targetUTC += DAY_MS;
+  }
+
+  return targetUTC;
+}
+
 async function postDailyGiveaway(client) {
   const settings = config.dailyGiveaway;
   if (!settings || !settings.enabled) return;
@@ -51,9 +105,27 @@ function startDailyGiveawayLoop(client) {
   const settings = config.dailyGiveaway;
   if (!settings || !settings.enabled) return;
 
-  // Post one right away, then repeat every 24 hours.
-  postDailyGiveaway(client);
-  setInterval(() => postDailyGiveaway(client), DAY_MS);
+  const hour = settings.hour ?? 23; // 24-hour format
+  const minute = settings.minute ?? 0;
+  const timeZone = settings.timezone || 'Australia/Sydney';
+
+  const scheduleNext = () => {
+    const nextRun = getNextRunTimestamp(hour, minute, timeZone);
+    const msUntilNext = nextRun - Date.now();
+
+    console.log(
+      `Next daily giveaway scheduled for ${new Date(nextRun).toLocaleString('en-AU', {
+        timeZone,
+      })} (${timeZone}).`
+    );
+
+    setTimeout(() => {
+      postDailyGiveaway(client);
+      scheduleNext();
+    }, msUntilNext);
+  };
+
+  scheduleNext();
 }
 
 module.exports = { startDailyGiveawayLoop };
