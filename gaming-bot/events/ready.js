@@ -1,5 +1,6 @@
 const { startTikTokPolling } = require('../utils/tiktokLive');
 const { rearmActiveGiveaways } = require('../utils/giveawayManager');
+const { announceNewChangelogEntries } = require('../utils/changelogAnnounce');
 
 module.exports = {
   name: 'ready',
@@ -8,6 +9,7 @@ module.exports = {
     console.log(`✅ Logged in as ${client.user.tag}`);
     startTikTokPolling(client);
     rearmActiveGiveaways(client);
+    announceNewChangelogEntries(client);
 
     const statuses = [
       { name: 'voiddd', type: 2 },
