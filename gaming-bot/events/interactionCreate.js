@@ -175,6 +175,14 @@ module.exports = {
             saveGiveaways(giveaways);
             await interaction.reply({ content: 'You left the giveaway.', ephemeral: true });
           }
+
+          const updatedEmbed = buildGiveawayEmbed(
+            giveaway.prize,
+            giveaway.endTimestamp,
+            giveaway.winnerCount,
+            giveaway.entrants.length
+          );
+          await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => {});
           return;
         }
 
