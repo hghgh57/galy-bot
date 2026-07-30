@@ -9,8 +9,6 @@ const {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Returns the offset (in minutes) between the given timezone's wall clock and UTC,
-// for the moment `date` represents. Handles DST automatically (e.g. AEDT vs AEST).
 function getZoneOffsetMinutes(date, timeZone) {
   const dtf = new Intl.DateTimeFormat('en-US', {
     timeZone,
@@ -37,11 +35,9 @@ function getZoneOffsetMinutes(date, timeZone) {
   return (asUTC - date.getTime()) / 60000;
 }
 
-// Computes the next UTC timestamp (ms) at which it will be `hour:minute` in `timeZone`.
 function getNextRunTimestamp(hour, minute, timeZone) {
   const now = new Date();
   const offsetMinutes = getZoneOffsetMinutes(now, timeZone);
-
   const dtf = new Intl.DateTimeFormat('en-US', {
     timeZone,
     year: 'numeric',
@@ -52,14 +48,11 @@ function getNextRunTimestamp(hour, minute, timeZone) {
     if (p.type !== 'literal') acc[p.type] = p.value;
     return acc;
   }, {});
-
   let targetUTC =
     Date.UTC(parts.year, parts.month - 1, parts.day, hour, minute, 0) - offsetMinutes * 60000;
-
   if (targetUTC <= now.getTime()) {
     targetUTC += DAY_MS;
   }
-
   return targetUTC;
 }
 
@@ -82,16 +75,23 @@ async function postDailyGiveaway(client) {
   const prize = settings.prize || '3m Donut SMP';
   const winnerCount = settings.winnerCount || 1;
   const endTimestamp = Date.now() + DAY_MS;
-
   const embed = buildGiveawayEmbed(prize, endTimestamp, winnerCount, 0);
+
+  const messageAbove = settings.messageAbove || '@everyone';
+
   const message = await channel
     .send({
-      content: '@everyone',
+      content: messageAbove,
       embeds: [embed],
       components: [buildJoinRow()],
     })
     .catch(() => null);
+
   if (!message) return;
+
+  if (settings.messageBelow) {
+    await channel.send({ content: settings.messageBelow }).catch(() => {});
+  }
 
   const giveaways = loadGiveaways();
   giveaways[message.id] = {
@@ -111,7 +111,7 @@ function startDailyGiveawayLoop(client) {
   const settings = config.dailyGiveaway;
   if (!settings || !settings.enabled) return;
 
-  const hour = settings.hour ?? 23; // 24-hour format
+  const hour = settings.hour ?? 23;
   const minute = settings.minute ?? 0;
   const timeZone = settings.timezone || 'Australia/Sydney';
 
