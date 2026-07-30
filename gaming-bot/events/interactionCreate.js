@@ -19,7 +19,7 @@ const {
   buildApplicationEmbed,
 } = require('../utils/applicationManager');
 const config = require('../config.json');
-const { loadGiveaways, saveGiveaways } = require('../utils/giveawayManager');
+const { loadGiveaways, saveGiveaways, buildGiveawayEmbed } = require('../utils/giveawayManager');
 
 function buildQuestionModal(customId, title, questions) {
   const modal = new ModalBuilder().setCustomId(customId).setTitle(title);
