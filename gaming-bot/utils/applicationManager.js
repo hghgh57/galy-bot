@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const pendingAnswers = new Map();
 
@@ -74,6 +74,23 @@ function buildApplicationEmbed(member, appConfig, answers) {
   return embed;
 }
 
+function buildDecisionRow(userId, appId, disabled = false) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`app_accept_${userId}_${appId}`)
+      .setLabel('Accept')
+      .setEmoji('✅')
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(disabled),
+    new ButtonBuilder()
+      .setCustomId(`app_deny_${userId}_${appId}`)
+      .setLabel('Deny')
+      .setEmoji('❌')
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(disabled)
+  );
+}
+
 module.exports = {
   savePartial,
   getPartial,
@@ -82,4 +99,5 @@ module.exports = {
   markApplied,
   clearApplied,
   buildApplicationEmbed,
+  buildDecisionRow,
 };
