@@ -12,8 +12,8 @@ module.exports = {
     startDailyGiveawayLoop(client);
 
     const statuses = [
-      { name: 'voiddd', type: 2 },
-      { name: 'stalking voidz toilet', type: 3 },
+      { name: 'stalking voidplier rn', type: 2 },
+      { name: 'watching 81 peoples', type: 3 },
     ];
 
     let index = 0;
