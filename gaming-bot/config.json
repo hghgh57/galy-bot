@@ -37,7 +37,7 @@
       "id": "support",
       "label": "Support",
       "description": "General help or questions",
-      "emoji": "🧩"
+      "emoji": "📩"
     },
     {
       "id": "giveaway_sponsor",
@@ -49,26 +49,31 @@
       "id": "giveaway_claim",
       "label": "Giveaway Claim",
       "description": "Claim a giveaway you won",
-      "emoji": "💰"
+      "emoji": "💲"
     },
     {
       "id": "spawner_sell",
       "label": "Spawner Sell",
       "description": "Sell spawners to staff",
-      "emoji": "🛠️"
+      "emoji": "💀"
     },
     {
       "id": "spawner_buy",
       "label": "Spawner Buy",
       "description": "Buy spawners off staff",
-      "emoji": "🚀"
+      "emoji": "💀"
     },
     {
       "id": "partnership",
       "label": "Partnership",
       "description": "Apply for a server partnership",
       "emoji": "🤝"
-    }
+    },
+     {
+      "id": "server inquiry",
+      "label": "server inq",
+      "description": "ask serious server inquirys",
+      "emoji": "🚨"
   ],
   "applications": [
     {
