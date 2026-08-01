@@ -80,7 +80,7 @@
     {
       "id": "staff",
       "label": "Staff Application",
-      "description": "Apply to become staff. reqs. > must be 14+ > give good detail > have past experince > no past punishments",
+      "description": "Reqs: 14+, good detail, past experience, no past punishments",
       "emoji": "🛡️",
       "color": "#5865F2",
       "reviewChannelId": "1526936497092296935",
