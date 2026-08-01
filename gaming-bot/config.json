@@ -101,8 +101,8 @@
     }
   ],
   "reactionRoles": {
-    "title": "🎭 Get Your Roles",
-    "description": "Click a button below to add or remove that role.",
+    "title": "react roles",
+    "description": "Click a button below to add or remove that role. spawner price ping - get pinged for spawner prices change. giveaway ping - get pinged for giveaways. quickdrop ping - get pinged for quickdrops",
     "color": "#5865F2",
     "roles": [
       {
