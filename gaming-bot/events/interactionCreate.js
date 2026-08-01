@@ -10,50 +10,13 @@ const {
 } = require('discord.js');
 const { createTicket, claimTicket, closeTicket } = require('../utils/ticketManager');
 const {
-  savePartial,
-  getPartial,
-  clearPartial,
   hasApplied,
-  markApplied,
   clearApplied,
-  buildApplicationEmbed,
+  buildDecisionRow,
 } = require('../utils/applicationManager');
+const { startDmApplication } = require('../utils/dmApplication');
 const config = require('../config.json');
 const { loadGiveaways, saveGiveaways, buildGiveawayEmbed } = require('../utils/giveawayManager');
-
-function buildQuestionModal(customId, title, questions) {
-  const modal = new ModalBuilder().setCustomId(customId).setTitle(title);
-
-  questions.forEach((question, i) => {
-    const input = new TextInputBuilder()
-      .setCustomId(`q${i}`)
-      .setLabel(question.slice(0, 45))
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(true)
-      .setMaxLength(1000);
-
-    modal.addComponents(new ActionRowBuilder().addComponents(input));
-  });
-
-  return modal;
-}
-
-function buildDecisionRow(userId, appId, disabled = false) {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`app_accept_${userId}_${appId}`)
-      .setLabel('Accept')
-      .setEmoji('✅')
-      .setStyle(ButtonStyle.Success)
-      .setDisabled(disabled),
-    new ButtonBuilder()
-      .setCustomId(`app_deny_${userId}_${appId}`)
-      .setLabel('Deny')
-      .setEmoji('❌')
-      .setStyle(ButtonStyle.Danger)
-      .setDisabled(disabled)
-  );
-}
 
 function isSupport(member) {
   const roleIds = config.supportRoleIds || [];
@@ -91,22 +54,6 @@ async function resetApplicationDropdown(message) {
   await message.edit({ components: [new ActionRowBuilder().addComponents(menu)] }).catch(() => {});
 }
 
-async function submitApplication(interaction, appId, appConfig, fullAnswers) {
-  clearPartial(interaction.user.id, appId);
-  markApplied(interaction.user.id, appId);
-
-  const embed = buildApplicationEmbed(interaction.member, appConfig, fullAnswers);
-  const reviewChannel = await interaction.guild.channels
-    .fetch(appConfig.reviewChannelId)
-    .catch(() => null);
-
-  if (reviewChannel) {
-    const row = buildDecisionRow(interaction.user.id, appId);
-    await reviewChannel.send({ embeds: [embed], components: [row] });
-  }
-  await interaction.reply({ content: '✅ Your application has been submitted!', ephemeral: true });
-}
-
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction) {
@@ -142,16 +89,18 @@ module.exports = {
           });
         }
 
-        const firstFive = appConfig.questions.slice(0, 5);
-        const modal = buildQuestionModal(
-          `application_modal1_${appId}`,
-          appConfig.label.slice(0, 45),
-          firstFive
-        );
-
-        await interaction.showModal(modal);
         await resetApplicationDropdown(interaction.message);
-        return;
+
+        const started = await startDmApplication(interaction.guild, interaction.user, appId, appConfig);
+
+        if (!started) {
+          return interaction.reply({
+            content: "❌ I couldn't DM you. Please enable direct messages from server members and try again.",
+            ephemeral: true,
+          });
+        }
+
+        return interaction.reply({ content: '📬 Check your DMs to fill out the application!', ephemeral: true });
       }
 
       if (interaction.isButton()) {
@@ -233,24 +182,6 @@ module.exports = {
           return;
         }
 
-        if (interaction.customId.startsWith('application_continue_')) {
-          const appId = interaction.customId.replace('application_continue_', '');
-          const appConfig = (config.applications || []).find((a) => a.id === appId);
-
-          if (!appConfig) {
-            return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
-          }
-
-          const remaining = appConfig.questions.slice(5);
-          const modal2 = buildQuestionModal(
-            `application_modal2_${appId}`,
-            appConfig.label.slice(0, 45),
-            remaining
-          );
-          await interaction.showModal(modal2);
-          return;
-        }
-
         if (interaction.customId.startsWith('app_accept_') || interaction.customId.startsWith('app_deny_')) {
           const isAccept = interaction.customId.startsWith('app_accept_');
           const prefix = isAccept ? 'app_accept_' : 'app_deny_';
@@ -298,63 +229,6 @@ module.exports = {
       if (interaction.isModalSubmit() && interaction.customId === 'ticket_close_reason_modal') {
         const reason = interaction.fields.getTextInputValue('close_reason_input');
         await closeTicket(interaction, reason);
-        return;
-      }
-
-      if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal1_')) {
-        const appId = interaction.customId.replace('application_modal1_', '');
-        const appConfig = (config.applications || []).find((a) => a.id === appId);
-
-        if (!appConfig) {
-          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
-        }
-
-        const answers = [];
-        for (let i = 0; i < 5; i++) {
-          answers.push(interaction.fields.getTextInputValue(`q${i}`));
-        }
-        savePartial(interaction.user.id, appId, answers);
-
-        const remaining = appConfig.questions.slice(5);
-
-        if (remaining.length === 0) {
-          const fullAnswers = getPartial(interaction.user.id, appId);
-          await submitApplication(interaction, appId, appConfig, fullAnswers);
-          return;
-        }
-
-        const continueRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`application_continue_${appId}`)
-            .setLabel('Continue Application')
-            .setStyle(ButtonStyle.Primary)
-        );
-
-        await interaction.reply({
-          content: 'Almost done! Click below to answer the last question.',
-          components: [continueRow],
-          ephemeral: true,
-        });
-        return;
-      }
-
-      if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal2_')) {
-        const appId = interaction.customId.replace('application_modal2_', '');
-        const appConfig = (config.applications || []).find((a) => a.id === appId);
-
-        if (!appConfig) {
-          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
-        }
-
-        const firstFive = getPartial(interaction.user.id, appId) || [];
-        const remainingCount = appConfig.questions.length - 5;
-        const lastAnswers = [];
-        for (let i = 0; i < remainingCount; i++) {
-          lastAnswers.push(interaction.fields.getTextInputValue(`q${i}`));
-        }
-
-        const fullAnswers = [...firstFive, ...lastAnswers];
-        await submitApplication(interaction, appId, appConfig, fullAnswers);
         return;
       }
     } catch (err) {
