@@ -4,6 +4,7 @@
   "changelogAnnounceChannelId": "1530572775255834696",
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
+  "applicationTicketCategoryId": "PUT_APPLICATION_TICKET_CATEGORY_ID_HERE",
   "trapChannelIds": ["1531999106237726901"],
   "welcomeChannelId": "1526915443326062735",
   "ticketRoleIds": ["1526936584253997146"],
