@@ -73,7 +73,8 @@
       "id": "server inquiry",
       "label": "server inq",
       "description": "ask serious server inquirys",
-      "emoji": "🚨"
+       "emoji": "🚨"
+         }
   ],
   "applications": [
     {
