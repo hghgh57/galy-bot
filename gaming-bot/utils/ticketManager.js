@@ -48,6 +48,14 @@ function getTicketRoleIds() {
   return config.ticketRoleIds || [];
 }
 
+function getApplicationTicketRoleIds() {
+  return config.applicationTicketRoleIds || [];
+}
+
+function isApplicationTicket(categoryId) {
+  return (config.applications || []).some((a) => a.id === categoryId);
+}
+
 async function createTicket(interaction, categoryId) {
   const { guild, user } = interaction;
   const category = config.categories.find((c) => c.id === categoryId);
@@ -152,7 +160,7 @@ async function createApplicationTicket(guild, member, appId, appConfig, answers)
     },
   ];
 
-  for (const roleId of getTicketRoleIds()) {
+  for (const roleId of getApplicationTicketRoleIds()) {
     if (!roleId || roleId.startsWith('PUT_')) continue;
     permissionOverwrites.push({
       id: roleId,
@@ -190,7 +198,7 @@ async function createApplicationTicket(guild, member, appId, appConfig, answers)
   const embed = buildApplicationEmbed(member, appConfig, answers);
   const decisionRow = buildDecisionRow(user.id, appId);
 
-  const mentions = getTicketRoleIds()
+  const mentions = getApplicationTicketRoleIds()
     .filter((id) => id && !id.startsWith('PUT_'))
     .map((id) => `<@&${id}>`)
     .join(' ');
@@ -213,7 +221,8 @@ async function claimTicket(interaction) {
   }
 
   const member = interaction.member;
-  const isTicketStaff = getTicketRoleIds().some((id) => member.roles.cache.has(id));
+  const roleIds = isApplicationTicket(meta.categoryId) ? getApplicationTicketRoleIds() : getTicketRoleIds();
+  const isTicketStaff = roleIds.some((id) => member.roles.cache.has(id));
   if (!isTicketStaff && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
     return interaction.reply({ content: 'Only ticket staff can claim tickets.', ephemeral: true });
   }
@@ -235,7 +244,8 @@ async function closeTicket(interaction, reason) {
   }
 
   const member = interaction.member;
-  const isTicketStaff = getTicketRoleIds().some((id) => member.roles.cache.has(id));
+  const roleIds = isApplicationTicket(meta.categoryId) ? getApplicationTicketRoleIds() : getTicketRoleIds();
+  const isTicketStaff = roleIds.some((id) => member.roles.cache.has(id));
   const isOwner = member.id === meta.userId;
   if (!isTicketStaff && !isOwner && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
     return interaction.reply({ content: 'You do not have permission to close this ticket.', ephemeral: true });
