@@ -78,44 +78,42 @@
          }
   ],
   "applications": [
-  {
-    "id": "staff",
-    "label": "Staff Application",
-    "description": "Apply to become staff",
-    "emoji": "🛡️",
-    "color": "#5865F2",
-    "reviewChannelId": "1526936497092296935",
-    "questions": [
-      "What is your discord username discord id and minecraft ign?",
-      "What current age are you?",
-      "Why did you apply for staff here at voids's Discord rather than other servers?",
-      "share your past staff experiences?",
-      "What is your playtime and balance on DonutSMP?",
-      "If someone was spamming and being toxic, how would you handle it?",
-      "If someone was being racist, how would you handle it?",
-      "If someone tried to bribe you to get a role or something, what would you do?",
-      "If you found out someone scammed someone, what would you do?",
-      "What are the top 3 things to do when a ticket is opened?",
-      "Do you understand that applications without very good detail will be denied?",
-      "Do you understand that if you do not meet all requirements, you will be denied?"
-    ]
-  },
-  {
-    "id": "pm",
-    "label": "partber manager",
-    "description": "Apply to join the build team",
-    "emoji": "🏗️",
-    "color": "#5865F2",
-    "questions": [
-      "What is your discord user and id?",
-      "How long have you been using discord?",
-      "what servers would you target to partner with",
-      "would you slack off when you get pm not trial",
-      "are you ok with being on a 1 week trial and you need to get 3 partners to get pm?"
-    ]
-  }
-]
-    
+    {
+      "id": "staff",
+      "label": "Staff Application",
+      "description": "Apply to become staff",
+      "emoji": "🛡️",
+      "color": "#5865F2",
+      "reviewChannelId": "1526936497092296935",
+      "questions": [
+        "What is your discord username discord id and minecraft ign?",
+        "What current age are you?",
+        "Why did you apply for staff here at voids's Discord rather than other servers?",
+        "share your past staff experiences?",
+        "What is your playtime and balance on DonutSMP?",
+        "If someone was spamming and being toxic, how would you handle it?",
+        "If someone was being racist, how would you handle it?",
+        "If someone tried to bribe you to get a role or something, what would you do?",
+        "If you found out someone scammed someone, what would you do?",
+        "What are the top 3 things to do when a ticket is opened?",
+        "Do you understand that applications without very good detail will be denied?",
+        "Do you understand that if you do not meet all requirements, you will be denied?"
+      ]
+    },
+    {
+      "id": "pm",
+      "label": "partber manager",
+      "description": "Apply to join the pm team",
+      "emoji": "🏗️",
+      "color": "#5865F2",
+      "questions": [
+        "What is your discord user and id?",
+        "How long have you been using discord?",
+        "what servers would you target to partner with",
+        "would you slack off when you get pm not trial",
+        "are you ok with being on a 1 week trial and you need to get 3 partners to get pm?"
+      ]
+    }
   ],
   "reactionRoles": {
     "title": "react roles",
