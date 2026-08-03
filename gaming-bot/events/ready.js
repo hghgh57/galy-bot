@@ -12,16 +12,25 @@ module.exports = {
     startDailyGiveawayLoop(client);
 
     const statuses = [
-      { name: 'stalking voidplier rn', type: 2 },
-      { name: 'watching 81 peoples', type: 3 },
+      { name: 'voiddd', type: 2 },
+      { name: 'team nothing', type: 3 },
+      { dynamic: 'memberCount', type: 3 },
     ];
 
+    function buildStatusName(status) {
+      if (status.dynamic === 'memberCount') {
+        const memberCount = client.guilds.cache.reduce((sum, g) => sum + (g.memberCount || 0), 0);
+        return `${memberCount.toLocaleString()} members`;
+      }
+      return status.name;
+    }
+
     let index = 0;
-    client.user.setActivity(statuses[index].name, { type: statuses[index].type });
+    client.user.setActivity(buildStatusName(statuses[index]), { type: statuses[index].type });
 
     setInterval(() => {
       index = (index + 1) % statuses.length;
-      client.user.setActivity(statuses[index].name, { type: statuses[index].type });
+      client.user.setActivity(buildStatusName(statuses[index]), { type: statuses[index].type });
     }, 10 * 1000);
   },
 };
