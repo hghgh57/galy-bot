@@ -12,8 +12,7 @@ module.exports = {
     startDailyGiveawayLoop(client);
 
     const statuses = [
-      { name: 'voiddd', type: 2 },
-      { name: 'team nothing', type: 3 },
+      { name: 'its a void era', type: 2 },
       { dynamic: 'memberCount', type: 3 },
     ];
 
