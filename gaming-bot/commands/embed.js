@@ -10,7 +10,7 @@ module.exports = {
     .setDescription('Post a custom embed message')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
     .addStringOption((opt) =>
-      opt.setName('title').setDescription('Embed title').setRequired(true)
+      opt.setName('title').setDescription('Embed title').setRequired(false)
     )
     .addStringOption((opt) =>
       opt.setName('description').setDescription('Embed description/body text').setRequired(true)
@@ -33,11 +33,11 @@ module.exports = {
     const image = interaction.options.getString('image');
 
     const embed = new EmbedBuilder()
-      .setTitle(title)
       .setDescription(description)
       .setColor(color)
       .setTimestamp();
 
+    if (title) embed.setTitle(title);
     if (footer) embed.setFooter({ text: footer });
     if (image) embed.setImage(image);
 
