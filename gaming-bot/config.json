@@ -29,11 +29,11 @@
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
  "panel": {
-    "title": "🎫 Support Tickets",
-    "description": "📩support | get support from are staff team 🎁giveaway sponsor | sponsor a quick drop or giveaway <#1526924531544100925>\n💲Giveaway claim | claim a giveaway or quick drop you won\n💀Spawner sell | sell Spawners to staff <#1526932906486927441>\n💀Spawner buy | buy Spawners from staff <#1526932906486927441>\n🤝Partnership | partner with are server\n🚨Server inq | ask serious server inquiry's",
+    "title": "",
+    "description": "📩 **support**\nGet support from staff\n🎁 **giveaway sponsor**\nSponsor a giveaway for the server (check out faq)\n🎊 **giveaway claim**\nClaim a giveaway you won (make sure you make it before claim time is over)\n💀 **spawner sell**\nSell Spawners to staff\n-# we never go first\n💀 **spawner buy**\nBuy Spawners from staff\n-# we never go first\n🤝 **partnership**\nPartner with are server make sure to check are reqs\n🚨 **server inq**\nOpen this for serious server inquiries",
     "color": "#5865F2",
     "footer": "We usually respond within a few hours. dev Forrealrob."
-  },
+},
   "categories": [
     {
       "id": "support",
