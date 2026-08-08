@@ -18,10 +18,18 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(config.panel.title)
       .setDescription(config.panel.description)
       .setColor(config.panel.color || '#5865F2')
       .setFooter({ text: config.panel.footer || '' });
+
+    if (config.panel.title) {
+      embed.setTitle(config.panel.title);
+    }
+
+    if (config.logoUrl && !config.logoUrl.startsWith('PUT_')) {
+      embed.setAuthor({ name: config.panel.title || 'Support', iconURL: config.logoUrl });
+      embed.setThumbnail(config.logoUrl);
+    }
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId('ticket_category_select')
@@ -29,7 +37,7 @@ module.exports = {
       .addOptions(
         config.categories.map((cat) => ({
           label: cat.label,
-          description: cat.description,
+          description: (cat.description || '').slice(0, 100),
           value: cat.id,
           emoji: cat.emoji || undefined,
         }))
