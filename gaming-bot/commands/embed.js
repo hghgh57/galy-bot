@@ -10,10 +10,10 @@ module.exports = {
     .setDescription('Post a custom embed message')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
     .addStringOption((opt) =>
-      opt.setName('title').setDescription('Embed title').setRequired(false)
+      opt.setName('description').setDescription('Embed description/body text').setRequired(true)
     )
     .addStringOption((opt) =>
-      opt.setName('description').setDescription('Embed description/body text').setRequired(true)
+      opt.setName('title').setDescription('Embed title').setRequired(false)
     )
     .addStringOption((opt) =>
       opt.setName('color').setDescription('Hex color, e.g. #5865F2').setRequired(false)
