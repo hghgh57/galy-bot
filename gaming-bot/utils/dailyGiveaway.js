@@ -4,7 +4,7 @@ const {
   saveGiveaways,
   buildGiveawayEmbed,
   buildJoinRow,
-  scheduleGiveaway,
+  endGiveaway,
 } = require('./giveawayManager');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -66,6 +66,15 @@ async function postDailyGiveaway(client) {
     return;
   }
 
+  // End any still-running daily giveaway first, so the winner message always
+  // goes out before the next giveaway is posted (no more racing timers).
+  const existing = loadGiveaways();
+  for (const [id, g] of Object.entries(existing)) {
+    if (g.isDaily && !g.ended) {
+      await endGiveaway(client, id);
+    }
+  }
+
   const channel = await client.channels.fetch(channelId).catch(() => null);
   if (!channel) {
     console.warn('Daily giveaway channel could not be found.');
@@ -101,37 +110,72 @@ async function postDailyGiveaway(client) {
     channelId: channel.id,
     entrants: [],
     ended: false,
+    isDaily: true,
   };
   saveGiveaways(giveaways);
 
-  scheduleGiveaway(client, message.id, DAY_MS);
+  // This giveaway's own endTimestamp (stored above, and shown in the embed's
+  // countdown) is what actually drives ending it — via the timer below. That
+  // timer is re-derived from this same stored endTimestamp every time the
+  // bot boots (see startDailyGiveawayLoop), so a restart can never leave the
+  // countdown finished while nothing actually ends it.
+  scheduleEndAndRepost(client, endTimestamp - Date.now());
+}
+
+function scheduleEndAndRepost(client, msUntilEnd) {
+  setTimeout(() => {
+    // postDailyGiveaway() ends the now-due giveaway first, then posts the
+    // next one — same guarantee as before: winner message, then next giveaway.
+    postDailyGiveaway(client);
+  }, Math.max(0, msUntilEnd));
+}
+
+function findActiveDailyGiveaway() {
+  const giveaways = loadGiveaways();
+  for (const [id, giveaway] of Object.entries(giveaways)) {
+    if (giveaway.isDaily && !giveaway.ended) return { id, giveaway };
+  }
+  return null;
 }
 
 function startDailyGiveawayLoop(client) {
   const settings = config.dailyGiveaway;
   if (!settings || !settings.enabled) return;
 
+  const active = findActiveDailyGiveaway();
+
+  if (active) {
+    const msLeft = active.giveaway.endTimestamp - Date.now();
+    if (msLeft <= 0) {
+      // Already overdue (e.g. the bot was down past its end time) — end it
+      // and post the next one right away instead of waiting.
+      postDailyGiveaway(client);
+    } else {
+      console.log(`Resuming daily giveaway — ending/reposting in ${Math.round(msLeft / 1000)}s.`);
+      scheduleEndAndRepost(client, msLeft);
+    }
+    return;
+  }
+
+  // No daily giveaway running at all yet (first ever run) — start fresh at
+  // the configured time of day. Every cycle after this one is driven by the
+  // stored endTimestamp above, not this hour/minute target.
   const hour = settings.hour ?? 23;
   const minute = settings.minute ?? 0;
   const timeZone = settings.timezone || 'Australia/Sydney';
 
-  const scheduleNext = () => {
-    const nextRun = getNextRunTimestamp(hour, minute, timeZone);
-    const msUntilNext = nextRun - Date.now();
+  const nextRun = getNextRunTimestamp(hour, minute, timeZone);
+  const msUntilNext = nextRun - Date.now();
 
-    console.log(
-      `Next daily giveaway scheduled for ${new Date(nextRun).toLocaleString('en-AU', {
-        timeZone,
-      })} (${timeZone}).`
-    );
+  console.log(
+    `First daily giveaway scheduled for ${new Date(nextRun).toLocaleString('en-AU', {
+      timeZone,
+    })} (${timeZone}).`
+  );
 
-    setTimeout(() => {
-      postDailyGiveaway(client);
-      scheduleNext();
-    }, msUntilNext);
-  };
-
-  scheduleNext();
+  setTimeout(() => {
+    postDailyGiveaway(client);
+  }, msUntilNext);
 }
 
 module.exports = { startDailyGiveawayLoop };
