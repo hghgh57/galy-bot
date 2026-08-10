@@ -1,11 +1,16 @@
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const { markApplied, clearApplied } = require('./applicationManager');
 const { createApplicationTicket } = require('./ticketManager');
 
 const QUESTION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes to answer each question
 
-// Tracks who currently has a DM application in progress, so a double-click
-// on the dropdown can't start two overlapping question loops for them.
+// Tracks who currently has a DM application question loop in progress.
 const activeDmApplications = new Set();
+
+// Tracks who has a "Start/Cancel" confirmation sitting in their DMs,
+// waiting to be clicked. Holds what's needed to actually start the loop
+// once they press Start (guild + the application's config).
+const pendingConfirmations = new Map();
 
 function keyFor(userId, appId) {
   return `${userId}:${appId}`;
@@ -16,37 +21,79 @@ function isCancel(text) {
   return normalized === 'cancel' || normalized === 'cancle';
 }
 
+function buildStartCancelRow(appId) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`dmapp_start_${appId}`)
+      .setLabel('Start Application')
+      .setEmoji('✅')
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId(`dmapp_cancel_${appId}`)
+      .setLabel('Cancel Application')
+      .setEmoji('❌')
+      .setStyle(ButtonStyle.Danger)
+  );
+}
+
 /**
- * Sends the intro DM and, if that succeeds, kicks off the question loop in
- * the background. Returns true/false for whether the DM could be sent at
- * all, so the caller knows whether to tell the user "check your DMs" or
- * "I couldn't DM you".
+ * Sends the "would you like to start?" confirmation DM. Returns true/false
+ * for whether the DM could be sent at all, so the caller knows whether to
+ * tell the user "check your DMs" or "I couldn't DM you".
  */
 async function startDmApplication(guild, user, appId, appConfig) {
   const key = keyFor(user.id, appId);
-  if (activeDmApplications.has(key)) return true;
+  if (activeDmApplications.has(key) || pendingConfirmations.has(key)) return true;
 
   const dm = await user.createDM().catch(() => null);
   if (!dm) return false;
 
-  const intro = await dm
-    .send(
-      `📋 **${appConfig.label}**\n` +
-        `I'll ask you ${appConfig.questions.length} question(s) one at a time — just reply here with your answer.\n` +
-        `Type \`cancel\` at any point to stop the application. You have ${Math.round(
-          QUESTION_TIMEOUT_MS / 60000
-        )} minutes to answer each question.`
+  const embed = new EmbedBuilder()
+    .setTitle(`📋 ${appConfig.label}`)
+    .setDescription(
+      `Would you like to start this application?\n\n` +
+        `I'll ask you ${appConfig.questions.length} question(s) one at a time — you'll be able to type \`cancel\` at any point once it starts.`
     )
-    .catch(() => null);
+    .setColor(appConfig.color || '#5865F2');
 
-  if (!intro) return false;
+  const sent = await dm.send({ embeds: [embed], components: [buildStartCancelRow(appId)] }).catch(() => null);
+  if (!sent) return false;
+
+  pendingConfirmations.set(key, { guild, appConfig });
+  return true;
+}
+
+/** Called from interactionCreate.js when the "Start Application" DM button is clicked. */
+async function handleDmApplicationStart(interaction, appId) {
+  const key = keyFor(interaction.user.id, appId);
+  const pending = pendingConfirmations.get(key);
+  pendingConfirmations.delete(key);
+
+  if (!pending) {
+    await interaction
+      .update({ content: 'This confirmation has expired — please start again from the panel.', embeds: [], components: [] })
+      .catch(() => {});
+    return;
+  }
+
+  await interaction
+    .update({ content: `📋 **${pending.appConfig.label}** — let's go! Type \`cancel\` any time to stop.`, embeds: [], components: [] })
+    .catch(() => {});
+
+  const dm = await interaction.user.createDM().catch(() => null);
+  if (!dm) return;
 
   activeDmApplications.add(key);
-  runQuestionLoop(guild, user, dm, appId, appConfig).finally(() => {
+  runQuestionLoop(pending.guild, interaction.user, dm, appId, pending.appConfig).finally(() => {
     activeDmApplications.delete(key);
   });
+}
 
-  return true;
+/** Called from interactionCreate.js when the "Cancel Application" DM button is clicked. */
+async function handleDmApplicationCancel(interaction, appId) {
+  const key = keyFor(interaction.user.id, appId);
+  pendingConfirmations.delete(key);
+  await interaction.update({ content: '❌ Application cancelled.', embeds: [], components: [] }).catch(() => {});
 }
 
 async function runQuestionLoop(guild, user, dm, appId, appConfig) {
@@ -108,4 +155,4 @@ async function runQuestionLoop(guild, user, dm, appId, appConfig) {
   await dm.send(`✅ Application submitted! A ticket has been opened for it: ${channel.url}`).catch(() => {});
 }
 
-module.exports = { startDmApplication };
+module.exports = { startDmApplication, handleDmApplicationStart, handleDmApplicationCancel };
