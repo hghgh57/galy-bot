@@ -137,7 +137,7 @@
     "hour": 19,
     "minute": 10,
     "timezone": "Australia/Sydney",
-    "messageAbove": "@everyone 🎉 Daily giveaway time!",
+    "messageAbove": "@<1526927249604083904> 🎉 Daily giveaway time!",
     "messageBelow": "Good luck everyone — winner picked in 24 hours if you win make a ticket you have 3h to claim!"
   },
   "antiRaid": {
