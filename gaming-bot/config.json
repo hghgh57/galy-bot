@@ -64,7 +64,7 @@
       "id": "partner",
       "label": "partnership",
       "description": "partner with are server",
-      "emoji": "",
+      "emoji": ":handshake: ",
       "questions": ["How many members does your server have?", "do you agree to are reqs?"]
     }
   ],
