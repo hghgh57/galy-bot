@@ -14,7 +14,11 @@ const {
   clearApplied,
   buildDecisionRow,
 } = require('../utils/applicationManager');
-const { startDmApplication } = require('../utils/dmApplication');
+const {
+  startDmApplication,
+  handleDmApplicationStart,
+  handleDmApplicationCancel,
+} = require('../utils/dmApplication');
 const config = require('../config.json');
 const { loadGiveaways, saveGiveaways, buildGiveawayEmbed } = require('../utils/giveawayManager');
 
@@ -54,6 +58,27 @@ async function resetApplicationDropdown(message) {
   await message.edit({ components: [new ActionRowBuilder().addComponents(menu)] }).catch(() => {});
 }
 
+// Builds a short modal asking a category's configured questions (up to 5,
+// Discord's per-modal limit). The category id is embedded in the modal's
+// customId so the submit handler below knows which ticket to create.
+function buildQuestionsModal(category) {
+  const modal = new ModalBuilder()
+    .setCustomId(`ticket_questions_modal_${category.id}`)
+    .setTitle(category.label.slice(0, 45));
+
+  category.questions.slice(0, 5).forEach((question, i) => {
+    const input = new TextInputBuilder()
+      .setCustomId(`q_${i}`)
+      .setLabel(question.slice(0, 45))
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true)
+      .setMaxLength(200);
+    modal.addComponents(new ActionRowBuilder().addComponents(input));
+  });
+
+  return modal;
+}
+
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction) {
@@ -67,8 +92,39 @@ module.exports = {
 
       if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_category_select') {
         const categoryId = interaction.values[0];
-        await createTicket(interaction, categoryId);
-        await resetTicketDropdown(interaction.message);
+        const category = (config.categories || []).find((c) => c.id === categoryId);
+
+        // Categories with configured questions get a modal first — the
+        // ticket itself is created once that's submitted, in the
+        // ticket_questions_modal_ handler below.
+        if (category?.questions?.length) {
+          await interaction.showModal(buildQuestionsModal(category));
+          await resetTicketDropdown(interaction.message);
+          return;
+        }
+
+        try {
+          await createTicket(interaction, categoryId);
+        } finally {
+          await resetTicketDropdown(interaction.message);
+        }
+        return;
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId.startsWith('ticket_questions_modal_')) {
+        const categoryId = interaction.customId.replace('ticket_questions_modal_', '');
+        const category = (config.categories || []).find((c) => c.id === categoryId);
+
+        if (!category) {
+          return interaction.reply({ content: 'Unknown ticket category.', ephemeral: true });
+        }
+
+        const answers = category.questions.map((question, i) => ({
+          question,
+          answer: interaction.fields.getTextInputValue(`q_${i}`),
+        }));
+
+        await createTicket(interaction, categoryId, answers);
         return;
       }
 
@@ -104,6 +160,22 @@ module.exports = {
       }
 
       if (interaction.isButton()) {
+        // These were previously unhandled — dmApplication.js sends buttons
+        // with these customIds in DMs, but nothing here ever called the
+        // handlers for them, so clicking Start/Cancel on the DM
+        // confirmation silently failed.
+        if (interaction.customId.startsWith('dmapp_start_')) {
+          const appId = interaction.customId.replace('dmapp_start_', '');
+          await handleDmApplicationStart(interaction, appId);
+          return;
+        }
+
+        if (interaction.customId.startsWith('dmapp_cancel_')) {
+          const appId = interaction.customId.replace('dmapp_cancel_', '');
+          await handleDmApplicationCancel(interaction, appId);
+          return;
+        }
+
         if (interaction.customId === 'giveaway_join') {
           const giveaways = loadGiveaways();
           const giveaway = giveaways[interaction.message.id];
@@ -139,17 +211,44 @@ module.exports = {
           const roleId = interaction.customId.replace('rr_', '');
           const member = interaction.member;
 
+          // Acknowledge immediately — role fetch/add/remove below are all
+          // network calls, and doing them before any response risks missing
+          // Discord's 3-second interaction deadline, which leaves the
+          // button stuck showing a loading spinner client-side.
+          await interaction.deferReply({ ephemeral: true });
+
           const role = await interaction.guild.roles.fetch(roleId).catch(() => null);
           if (!role) {
-            return interaction.reply({ content: 'That role no longer exists.', ephemeral: true });
+            return interaction.editReply({ content: 'That role no longer exists.' });
           }
 
+          // Prefer the friendly label from config.json over the raw Discord
+          // role name, so the message matches what's configured (e.g.
+          // "Giveaway ping") instead of whatever the role happens to be
+          // named in the server.
+          const configEntry = (config.reactionRoles?.roles || []).find((r) => r.roleId === roleId);
+          const displayName = configEntry?.label || role.name;
+
           if (member.roles.cache.has(roleId)) {
-            await member.roles.remove(roleId).catch(() => {});
-            await interaction.reply({ content: `Removed the **${role.name}** role.`, ephemeral: true });
+            try {
+              await member.roles.remove(roleId);
+              await interaction.editReply({ content: `Removed the **${displayName}** role.` });
+            } catch (err) {
+              console.error(`Failed to remove role ${roleId} (${displayName}) from ${member.user.tag}:`, err);
+              await interaction.editReply({
+                content: `❌ I couldn't remove the **${displayName}** role — I may not have permission (check my role is above it in Server Settings → Roles).`,
+              });
+            }
           } else {
-            await member.roles.add(roleId).catch(() => {});
-            await interaction.reply({ content: `Gave you the **${role.name}** role!`, ephemeral: true });
+            try {
+              await member.roles.add(roleId);
+              await interaction.editReply({ content: `Gave you the **${displayName}** role!` });
+            } catch (err) {
+              console.error(`Failed to add role ${roleId} (${displayName}) to ${member.user.tag}:`, err);
+              await interaction.editReply({
+                content: `❌ I couldn't give you the **${displayName}** role — I may not have permission (check my role is above it in Server Settings → Roles).`,
+              });
+            }
           }
           return;
         }
