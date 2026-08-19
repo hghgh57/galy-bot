@@ -56,7 +56,7 @@ function isApplicationTicket(categoryId) {
   return (config.applications || []).some((a) => a.id === categoryId);
 }
 
-async function createTicket(interaction, categoryId) {
+async function createTicket(interaction, categoryId, answers = []) {
   const { guild, user } = interaction;
   const category = config.categories.find((c) => c.id === categoryId);
   if (!category) {
@@ -87,6 +87,20 @@ async function createTicket(interaction, categoryId) {
         PermissionsBitField.Flags.AttachFiles,
       ],
     },
+    // Explicitly grant the bot itself access — without this, the bot only
+    // gets into the channel it just created via its base server-wide
+    // permissions, which can silently fail (channel.send throwing Missing
+    // Permissions) if the bot's role isn't broadly permissioned.
+    {
+      id: interaction.client.user.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages,
+      ],
+    },
   ];
 
   for (const roleId of getTicketRoleIds()) {
@@ -115,30 +129,45 @@ async function createTicket(interaction, categoryId) {
     channelOptions.parent = config.ticketCategoryId;
   }
 
-  const channel = await guild.channels.create(channelOptions);
+  // Everything below can fail for reasons outside our control (missing
+  // permissions, invalid parent category, rate limits) — without a
+  // try/catch here, a throw leaves the interaction stuck on "thinking"
+  // forever with no reply and no error visible to the user.
+  try {
+    const channel = await guild.channels.create(channelOptions);
 
-  const welcomeEmbed = new EmbedBuilder()
-    .setTitle(`${category.emoji || '🎫'} ${category.label}`)
-    .setDescription(
-      `Hi ${user}, thanks for reaching out!\n\n` +
-        `**Category:** ${category.label}\n` +
-        `Please describe your issue in as much detail as possible. A member of our team will be with you shortly.`
-    )
-    .setColor(config.panel.color || '#5865F2')
-    .setTimestamp();
+    const welcomeEmbed = new EmbedBuilder()
+      .setTitle(`${category.emoji || '🎫'} ${category.label}`)
+      .setDescription(
+        `Hi ${user}, thanks for reaching out!\n\n` +
+          `**Category:** ${category.label}\n` +
+          `Please describe your issue in as much detail as possible. A member of our team will be with you shortly.`
+      )
+      .setColor(config.panel.color || '#5865F2')
+      .setTimestamp();
 
-  const mentions = getTicketRoleIds()
-    .filter((id) => id && !id.startsWith('PUT_'))
-    .map((id) => `<@&${id}>`)
-    .join(' ');
+    if (answers.length) {
+      welcomeEmbed.addFields(answers.map((a) => ({ name: a.question, value: a.answer || 'No answer' })));
+    }
 
-  await channel.send({
-    content: `${user} ${mentions}`.trim(),
-    embeds: [welcomeEmbed],
-    components: [buildTicketControlRow()],
-  });
+    const mentions = getTicketRoleIds()
+      .filter((id) => id && !id.startsWith('PUT_'))
+      .map((id) => `<@&${id}>`)
+      .join(' ');
 
-  await interaction.editReply({ content: `Your ticket has been created: ${channel}` });
+    await channel.send({
+      content: `${user} ${mentions}`.trim(),
+      embeds: [welcomeEmbed],
+      components: [buildTicketControlRow()],
+    });
+
+    await interaction.editReply({ content: `Your ticket has been created: ${channel}` });
+  } catch (err) {
+    console.error('Failed to create ticket:', err);
+    await interaction
+      .editReply({ content: '❌ Something went wrong creating your ticket. Please try again or contact staff.' })
+      .catch(() => {});
+  }
 }
 
 async function createApplicationTicket(guild, member, appId, appConfig, answers) {
@@ -156,6 +185,19 @@ async function createApplicationTicket(guild, member, appId, appConfig, answers)
         PermissionsBitField.Flags.SendMessages,
         PermissionsBitField.Flags.ReadMessageHistory,
         PermissionsBitField.Flags.AttachFiles,
+      ],
+    },
+    // Same reasoning as createTicket above — explicitly grant the bot
+    // itself access so posting into the channel it just made can't fail
+    // silently due to relying on base server-wide permissions alone.
+    {
+      id: guild.members.me.id,
+      allow: [
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ReadMessageHistory,
+        PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.ManageMessages,
       ],
     },
   ];
