@@ -25,50 +25,46 @@
     "color": "#5865F2",
     "footer": "We usually respond within a few hours. dev Forrealrob."
 },
-  "categories": [
-    {
-      "id": "support",
-      "label": "Support",
-      "description": "General help or questions",
-      "emoji": "📩"
-    },
-    {
-      "id": "giveaway_sponsor",
-      "label": "Giveaway Sponsor",
-      "description": "Sponsor a giveaway",
-      "emoji": "🎁"
-    },
-    {
-      "id": "giveaway_claim",
-      "label": "Giveaway Claim",
-      "description": "Claim a giveaway you won",
-      "emoji": "💲"
-    },
-    {
-      "id": "spawner_sell",
-      "label": "Spawner Sell",
-      "description": "Sell spawners to staff",
-      "emoji": "💀"
-    },
-    {
-      "id": "spawner_buy",
-      "label": "Spawner Buy",
-      "description": "Buy spawners off staff",
-      "emoji": "💀"
-    },
-    {
-      "id": "partnership",
-      "label": "Partnership",
-      "description": "Apply for a server partnership",
-      "emoji": "🤝"
-    },
-     {
-      "id": "server inquiry",
-      "label": "server inq",
-      "description": "ask serious server inquirys",
-       "emoji": "🚨"
-         }
-  ],
+"categories": [
+  {
+    "id": "support",
+    "label": "Support",
+    "description": "General help or questions",
+    "emoji": "🎫",
+    "channelCategoryId": "PUT_SUPPORT_CATEGORY_ID_HERE",
+    "questions": ["What do you need help with?", "What's your IGN?"]
+  },
+  {
+    "id": "giveaway_claim",
+    "label": "Giveaway Claim",
+    "description": "Claim a giveaway you won",
+    "emoji": "🎉",
+    "channelCategoryId": "PUT_GIVEAWAY_CLAIM_CATEGORY_ID_HERE"
+  },
+  {
+    "id": "giveaway_sponsor",
+    "label": "Giveaway Sponsor",
+    "description": "Sponsor a giveaway",
+    "emoji": "🏆",
+    "channelCategoryId": "PUT_GIVEAWAY_SPONSOR_CATEGORY_ID_HERE"
+  },
+  {
+    "id": "spawner_buy",
+    "label": "Spawner Buy",
+    "description": "Buy spawners from staff",
+    "emoji": "💀",
+    "channelCategoryId": "PUT_SPAWNER_BUY_CATEGORY_ID_HERE",
+    "questions": ["How many do you want to buy?", "What's your IGN?"]
+  },
+  {
+    "id": "spawner_sell",
+    "label": "Spawner Sell",
+    "description": "Sell spawners to staff",
+    "emoji": "💀",
+    "channelCategoryId": "PUT_SPAWNER_SELL_CATEGORY_ID_HERE",
+    "questions": ["How many do you want to sell?", "What's your IGN?"]
+  }
+],
   "applications": [
     {
       "id": "staff",
