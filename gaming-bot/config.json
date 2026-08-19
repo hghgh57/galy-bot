@@ -7,7 +7,7 @@
   "applicationTicketCategoryId": "1533068861174452255",
   "welcomeChannelId": "1526915443326062735",
   "ticketRoleIds": ["1526936584253997146"],
-"applicationTicketRoleIds": ["1531943751939784796"],
+  "applicationTicketRoleIds": ["1531943751939784796"],
   "modRoleIds": ["1526911450466222203"],
   "modLogChannelId": "1530947462897078354",
   "mutedRoleId": "1530947173666259085",
@@ -19,57 +19,55 @@
   ],
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
- "panel": {
+  "panel": {
     "title": "",
     "description": "📩 **support**\nGet support from staff\n🎁 **giveaway sponsor**\nSponsor a giveaway for the server (check out faq)\n🎊 **giveaway claim**\nClaim a giveaway you won (make sure you make it before claim time is over)\n💀 **spawner sell**\nSell Spawners to staff\n-# we never go first\n💀 **spawner buy**\nBuy Spawners from staff\n-# we never go first\n🤝 **partnership**\nPartner with are server make sure to check are reqs\n🚨 **server inq**\nOpen this for serious server inquiries",
     "color": "#5865F2",
     "footer": "We usually respond within a few hours. dev Forrealrob."
-},
-"categories": [
-  {
-    "id": "support",
-    "label": "Support",
-    "description": "General help or questions",
-    "emoji": "📩",
-    "questions": ["What do you need help with?", "What's your IGN?"]
   },
-  {
-    "id": "giveaway_claim",
-    "label": "Giveaway Claim",
-    "description": "Claim a giveaway you won",
-    "emoji": "🎉",
-    
-    "questions": ["how much did you win?", "who was the giveaway hosted by
-      /"]
-  },
-  {
-    "id": "giveaway_sponsor",
-    "label": "Giveaway Sponsor",
-    "description": "Sponsor a giveaway",
-    "emoji": "🏆",
-  },
-  {
-    "id": "spawner_buy",
-    "label": "Spawner Buy",
-    "description": "Buy spawners from staff",
-    "emoji": "💀",
-    "questions": ["How many do you want to buy?", "What's your IGN?"]
-  },
-  {
-    "id": "spawner_sell",
-    "label": "Spawner Sell",
-    "description": "Sell spawners to staff",
-    "emoji": "💀",
-    "questions": ["How many do you want to sell?", "What's your IGN?"]
-      },
-  {
-    "id": "partner",
-    "label": "partnership",
-    "description": "partner with are server",
-    "emoji": "",
-    "questions": ["How many members does your server have?", "do you agree to are reqs?"]
-  }
-],
+  "categories": [
+    {
+      "id": "support",
+      "label": "Support",
+      "description": "General help or questions",
+      "emoji": "📩",
+      "questions": ["What do you need help with?", "What's your IGN?"]
+    },
+    {
+      "id": "giveaway_claim",
+      "label": "Giveaway Claim",
+      "description": "Claim a giveaway you won",
+      "emoji": "🎉",
+      "questions": ["how much did you win?", "who was the giveaway hosted by?"]
+    },
+    {
+      "id": "giveaway_sponsor",
+      "label": "Giveaway Sponsor",
+      "description": "Sponsor a giveaway",
+      "emoji": "🏆"
+    },
+    {
+      "id": "spawner_buy",
+      "label": "Spawner Buy",
+      "description": "Buy spawners from staff",
+      "emoji": "💀",
+      "questions": ["How many do you want to buy?", "What's your IGN?"]
+    },
+    {
+      "id": "spawner_sell",
+      "label": "Spawner Sell",
+      "description": "Sell spawners to staff",
+      "emoji": "💀",
+      "questions": ["How many do you want to sell?", "What's your IGN?"]
+    },
+    {
+      "id": "partner",
+      "label": "partnership",
+      "description": "partner with are server",
+      "emoji": "",
+      "questions": ["How many members does your server have?", "do you agree to are reqs?"]
+    }
+  ],
   "applications": [
     {
       "id": "staff",
@@ -131,17 +129,16 @@
       }
     ]
   },
- "dailyGiveaway": {
-  "enabled": true,
-  "channelId": "1532002698101002372",
-  "prize": "3m Donut SMP",
-  "winnerCount": 1,
-  "hour": 19,
-  "minute": 10,
-  "timezone": "Australia/Sydney",
-  "messageAbove": "@everyone 🎉 Daily giveaway time!",
-  "messageBelow": "Good luck everyone — winner picked in 24 hours if you win make a ticket you have 3h to claim!"
-
+  "dailyGiveaway": {
+    "enabled": true,
+    "channelId": "1532002698101002372",
+    "prize": "3m Donut SMP",
+    "winnerCount": 1,
+    "hour": 19,
+    "minute": 10,
+    "timezone": "Australia/Sydney",
+    "messageAbove": "@everyone 🎉 Daily giveaway time!",
+    "messageBelow": "Good luck everyone — winner picked in 24 hours if you win make a ticket you have 3h to claim!"
   },
   "antiRaid": {
     "enabled": true,
