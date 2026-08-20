@@ -145,7 +145,7 @@
   "dailyQuote": {
     "enabled": true,
     "channelId": "1539908403055558686",
-    "hour": 18,
+    "hour": 10,
     "minute": 10,
     "timezone": "Australia/Sydney",
     "quotes": [
