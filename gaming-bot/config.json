@@ -2,6 +2,8 @@
   "adminRoleIds": ["1526913504668287026"],
   "supportRoleIds": ["1526913504668287026"],
   "changelogAnnounceChannelId": "1530572775255834696",
+  "joinToCreateChannelId": "1539815781939019827",
+"joinToCreateCategoryId": "PUT_JOIN_TO_CREATE_CATEGORY_ID_HERE"
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
   "applicationTicketCategoryId": "1533068861174452255",
