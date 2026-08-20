@@ -1,6 +1,7 @@
 const { startTikTokPolling } = require('../utils/tiktokLive');
 const { rearmActiveGiveaways } = require('../utils/giveawayManager');
 const { startDailyGiveawayLoop } = require('../utils/dailyGiveaway');
+const { startDailyQuoteLoop } = require('../utils/dailyQuote');
 
 module.exports = {
   name: 'ready',
@@ -10,6 +11,7 @@ module.exports = {
     startTikTokPolling(client);
     rearmActiveGiveaways(client);
     startDailyGiveawayLoop(client);
+    startDailyQuoteLoop(client);
 
     const statuses = [
       { name: 'its a void era', type: 2 },
