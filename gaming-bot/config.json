@@ -2,10 +2,6 @@
   "adminRoleIds": ["1526913504668287026"],
   "supportRoleIds": ["1526913504668287026"],
   "changelogAnnounceChannelId": "1530572775255834696",
-  "vouchRoleId": "1526936584253997146",
-"vouchChannelId": "1527240245928656916",
-"vouchLogChannelId": "1530947462897078354",
-  "joinToCreateChannelId": "1539815781939019827",
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
   "applicationTicketCategoryId": "1533068861174452255",
@@ -79,7 +75,7 @@
       "description": "Apply to become staff",
       "emoji": "🛡️",
       "color": "#5865F2",
-      "reviewChannelId": "1538367108818403400",
+      "reviewChannelId": "1526936497092296935",
       "questions": [
         "What is your discord username discord id and minecraft ign?",
         "What current age are you?",
@@ -116,21 +112,9 @@
     "description": "Click a button below to add or remove that role. spawner price ping - get pinged for spawner prices change. giveaway ping - get pinged for giveaways. quickdrop ping - get pinged for quickdrops",
     "color": "#5865F2",
     "roles": [
-      {
-        "roleId": "1526927178749448354",
-        "label": "spawner price ping",
-        "emoji": "📢"
-      },
-      {
-        "roleId": "1507231599056654486",
-        "label": "Giveaway ping",
-        "emoji": "🎉"
-      },
-      {
-        "roleId": "1526927287486779566",
-        "label": "quickdrop pings",
-        "emoji": "🎁"
-      }
+      { "roleId": "1526927178749448354", "label": "spawner price ping", "emoji": "📢" },
+      { "roleId": "1507231599056654486", "label": "Giveaway ping", "emoji": "🎉" },
+      { "roleId": "1526927287486779566", "label": "quickdrop pings", "emoji": "🎁" }
     ]
   },
   "dailyGiveaway": {
@@ -141,7 +125,7 @@
     "hour": 19,
     "minute": 10,
     "timezone": "Australia/Sydney",
-    "messageAbove": "<@1526927249604083904> 🎉 Daily giveaway time!",
+    "messageAbove": "@everyone 🎉 Daily giveaway time!",
     "messageBelow": "Good luck everyone — winner picked in 24 hours if you win make a ticket you have 3h to claim!"
   },
   "antiRaid": {
@@ -157,5 +141,19 @@
     { "version": 10, "title": "Added Calculator" },
     { "version": 11, "title": "Added auto logger" },
     { "version": 12, "title": "daily giveaways and purge and bot trap" }
-  ]
+  ],
+  "dailyQuote": {
+    "enabled": true,
+    "channelId": "PUT_DAILY_QUOTE_CHANNEL_ID_HERE",
+    "hour": 9,
+    "minute": 0,
+    "timezone": "Australia/Sydney",
+    "quotes": [
+      "The only way to do great work is to love what you do.",
+      "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+      "Believe you can and you're halfway there.",
+      "Don't watch the clock; do what it does. Keep going.",
+      "The future belongs to those who believe in the beauty of their dreams."
+    ]
+  }
 }
