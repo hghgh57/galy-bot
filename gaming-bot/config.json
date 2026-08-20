@@ -2,6 +2,8 @@
   "adminRoleIds": ["1526913504668287026"],
   "supportRoleIds": ["1526913504668287026"],
   "changelogAnnounceChannelId": "1530572775255834696",
+  "joinToCreateChannelId": "1539815781939019827",
+"joinToCreateCategoryId": "PUT_JOIN_TO_CREATE_CATEGORY_ID_HERE",
   "vouchRoleId": "1526912674649083936",
 "vouchChannelId": "1527240245928656916",
 "vouchLogChannelId": "1530947462897078354",
