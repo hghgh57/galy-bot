@@ -21,6 +21,7 @@ const {
 } = require('../utils/dmApplication');
 const config = require('../config.json');
 const { loadGiveaways, saveGiveaways, buildGiveawayEmbed } = require('../utils/giveawayManager');
+const { OPTION_LABELS, buildStarsRow } = require('../utils/vouchManager');
 
 function isSupport(member) {
   const roleIds = config.supportRoleIds || [];
@@ -176,6 +177,70 @@ module.exports = {
           return;
         }
 
+        if (interaction.customId.startsWith('vouch_no_')) {
+          const rest = interaction.customId.replace('vouch_no_', '');
+          const [requesterId, optionValue] = rest.split('|');
+          const optionLabel = OPTION_LABELS[optionValue] || optionValue;
+
+          await interaction.update({
+            embeds: [new EmbedBuilder().setDescription('No worries — thanks for letting us know!').setColor('#ED4245')],
+            components: [],
+          });
+
+          const logChannelId = config.vouchLogChannelId;
+          if (logChannelId && !logChannelId.startsWith('PUT_')) {
+            const logChannel = await interaction.client.channels.fetch(logChannelId).catch(() => null);
+            if (logChannel) {
+              const logEmbed = new EmbedBuilder()
+                .setTitle('Vouch Declined')
+                .addFields(
+                  { name: 'From', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
+                  { name: 'Requested by', value: `<@${requesterId}>`, inline: true },
+                  { name: 'Category', value: optionLabel, inline: true }
+                )
+                .setColor('#ED4245')
+                .setTimestamp();
+              await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+            }
+          }
+          return;
+        }
+
+        if (interaction.customId.startsWith('vouch_yes_')) {
+          const rest = interaction.customId.replace('vouch_yes_', '');
+          const [requesterId, optionValue] = rest.split('|');
+
+          await interaction.update({
+            embeds: [
+              new EmbedBuilder()
+                .setDescription('Awesome! How many stars would you like to give? (1-5)')
+                .setColor('#5865F2'),
+            ],
+            components: [buildStarsRow(requesterId, optionValue)],
+          });
+          return;
+        }
+
+        if (interaction.customId.startsWith('vouch_stars_')) {
+          const rest = interaction.customId.replace('vouch_stars_', '');
+          const [requesterId, optionValue, stars] = rest.split('|');
+
+          const modal = new ModalBuilder()
+            .setCustomId(`vouch_comment_modal_${requesterId}|${optionValue}|${stars}`)
+            .setTitle('Leave a Comment');
+
+          const commentInput = new TextInputBuilder()
+            .setCustomId('vouch_comment_input')
+            .setLabel('Comment (optional)')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(false)
+            .setMaxLength(500);
+
+          modal.addComponents(new ActionRowBuilder().addComponents(commentInput));
+          await interaction.showModal(modal);
+          return;
+        }
+
         if (interaction.customId === 'giveaway_join') {
           const giveaways = loadGiveaways();
           const giveaway = giveaways[interaction.message.id];
@@ -328,6 +393,43 @@ module.exports = {
       if (interaction.isModalSubmit() && interaction.customId === 'ticket_close_reason_modal') {
         const reason = interaction.fields.getTextInputValue('close_reason_input');
         await closeTicket(interaction, reason);
+        return;
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId.startsWith('vouch_comment_modal_')) {
+        const rest = interaction.customId.replace('vouch_comment_modal_', '');
+        const [requesterId, optionValue, stars] = rest.split('|');
+        const comment = interaction.fields.getTextInputValue('vouch_comment_input') || 'No comment left.';
+        const optionLabel = OPTION_LABELS[optionValue] || optionValue;
+        const starsNum = parseInt(stars, 10);
+        const starDisplay = '⭐'.repeat(starsNum) + '☆'.repeat(5 - starsNum);
+
+        // The modal was launched from the star-rating button, so .update()
+        // both acknowledges the submission and edits that same DM message.
+        await interaction.update({
+          embeds: [new EmbedBuilder().setDescription('✅ Thanks for your vouch!').setColor('#57F287')],
+          components: [],
+        });
+
+        const vouchChannelId = config.vouchChannelId;
+        if (vouchChannelId && !vouchChannelId.startsWith('PUT_')) {
+          const vouchChannel = await interaction.client.channels.fetch(vouchChannelId).catch(() => null);
+          if (vouchChannel) {
+            const requester = await interaction.client.users.fetch(requesterId).catch(() => null);
+            const vouchEmbed = new EmbedBuilder()
+              .setTitle('⭐ New Vouch')
+              .addFields(
+                { name: 'Vouch For', value: requester ? `${requester}` : `<@${requesterId}>`, inline: true },
+                { name: 'From', value: `${interaction.user}`, inline: true },
+                { name: 'Category', value: optionLabel, inline: true },
+                { name: 'Rating', value: starDisplay },
+                { name: 'Comment', value: comment }
+              )
+              .setColor('#FEE75C')
+              .setTimestamp();
+            await vouchChannel.send({ embeds: [vouchEmbed] }).catch(() => {});
+          }
+        }
         return;
       }
     } catch (err) {
