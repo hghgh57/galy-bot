@@ -144,9 +144,9 @@
   ],
   "dailyQuote": {
     "enabled": true,
-    "channelId": "PUT_DAILY_QUOTE_CHANNEL_ID_HERE",
-    "hour": 9,
-    "minute": 0,
+    "channelId": "1539908403055558686",
+    "hour": 18,
+    "minute": 15,
     "timezone": "Australia/Sydney",
     "quotes": [
       "The only way to do great work is to love what you do.",
