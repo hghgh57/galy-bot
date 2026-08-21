@@ -1,59 +1,80 @@
-const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
-const { parseTopic } = require('../utils/ticketManager');
-const { incrementStat } = require('../utils/staffTracker');
+const fs = require('fs');
+const path = require('path');
+const { EmbedBuilder } = require('discord.js');
 const config = require('../config.json');
 
-function getRoleIdsForCategory(categoryId) {
-  const isApplication = (config.applications || []).some((a) => a.id === categoryId);
-  return isApplication ? config.applicationTicketRoleIds || [] : config.ticketRoleIds || [];
+const DATA_DIR = process.env.DATA_DIR || '/app/data';
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const DATA_FILE = path.join(DATA_DIR, 'staffStats.json');
+
+function loadStats() {
+  if (!fs.existsSync(DATA_FILE)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+  } catch {
+    return {};
+  }
 }
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('ticket-rename')
-    .setDescription('Rename the current ticket channel')
-    .addStringOption((opt) => opt.setName('name').setDescription('New channel name').setRequired(true)),
+function saveStats(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
 
-  async execute(interaction) {
-    const meta = parseTopic(interaction.channel.topic);
-    if (!meta) {
-      return interaction.reply({ content: 'This does not look like a ticket channel.', ephemeral: true });
+function buildStaffEmbed(userId, stats) {
+  return new EmbedBuilder()
+    .setTitle('📊 Staff Activity')
+    .setDescription(`<@${userId}>`)
+    .addFields(
+      { name: 'Tickets Claimed', value: `${stats.ticketsClaimed || 0}`, inline: true },
+      { name: 'Tickets Closed', value: `${stats.ticketsClosed || 0}`, inline: true },
+      { name: 'Tickets Renamed', value: `${stats.ticketsRenamed || 0}`, inline: true },
+      { name: 'Moderation Actions', value: `${stats.moderationActions || 0}`, inline: true }
+    )
+    .setColor('#5865F2')
+    .setTimestamp();
+}
+
+// Bumps a stat for a staff member by 1, creating their tracker embed the
+// first time they take any tracked action, and editing it in place after
+// that. Safe to call even if staffTrackerChannelId isn't configured yet —
+// it just no-ops, so wiring this in never breaks anything.
+async function incrementStat(guild, userId, statKey) {
+  const channelId = config.staffTrackerChannelId;
+  if (!channelId || channelId.startsWith('PUT_')) return;
+
+  const allStats = loadStats();
+  const key = `${guild.id}:${userId}`;
+  const entry = allStats[key] || {
+    ticketsClaimed: 0,
+    ticketsClosed: 0,
+    ticketsRenamed: 0,
+    moderationActions: 0,
+    messageId: null,
+  };
+
+  entry[statKey] = (entry[statKey] || 0) + 1;
+
+  const channel = await guild.channels.fetch(channelId).catch(() => null);
+  if (!channel) return;
+
+  const embed = buildStaffEmbed(userId, entry);
+
+  if (entry.messageId) {
+    const message = await channel.messages.fetch(entry.messageId).catch(() => null);
+    if (message) {
+      await message.edit({ embeds: [embed] }).catch(() => {});
+    } else {
+      // Their old tracker message is gone (deleted?) — post a fresh one.
+      const sent = await channel.send({ embeds: [embed] }).catch(() => null);
+      if (sent) entry.messageId = sent.id;
     }
+  } else {
+    const sent = await channel.send({ embeds: [embed] }).catch(() => null);
+    if (sent) entry.messageId = sent.id;
+  }
 
-    const member = interaction.member;
-    const roleIds = getRoleIdsForCategory(meta.categoryId);
-    const isTicketStaff = roleIds.some((id) => id && !id.startsWith('PUT_') && member.roles.cache.has(id));
-    if (!isTicketStaff && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-      return interaction.reply({ content: 'You do not have permission to rename this ticket.', ephemeral: true });
-    }
+  allStats[key] = entry;
+  saveStats(allStats);
+}
 
-    const newName = interaction.options
-      .getString('name')
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '-')
-      .slice(0, 90);
-
-    if (!newName) {
-      return interaction.reply({ content: 'That name is not valid.', ephemeral: true });
-    }
-
-    await interaction.deferReply({ ephemeral: true });
-
-    try {
-      await interaction.channel.setName(newName);
-    } catch (err) {
-      console.error('Failed to rename ticket channel:', err);
-      // Discord rate-limits channel renames to a small number per 10
-      // minutes — this is the most likely real-world failure here.
-      return interaction.editReply({
-        content: '❌ Could not rename the channel — Discord may be rate-limiting channel renames right now. Try again shortly.',
-      });
-    }
-
-    await interaction.editReply({ content: `✅ Ticket renamed to **${newName}**.` });
-
-    incrementStat(interaction.guild, interaction.user.id, 'ticketsRenamed').catch((err) => {
-      console.error('Failed to update staff tracker for ticket rename:', err);
-    });
-  },
-};
+module.exports = { incrementStat, buildStaffEmbed, loadStats };
