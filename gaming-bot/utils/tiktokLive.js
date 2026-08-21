@@ -2,6 +2,16 @@ const { EmbedBuilder } = require('discord.js');
 const config = require('../config.json');
 
 const POLL_INTERVAL_MS = 2 * 60 * 1000;
+
+// TikTok's unauthenticated live-status page is flaky enough that a single
+// "offline" reading isn't trusted — it was causing the live state to reset
+// mid-stream (one bad scrape) and then re-fire the announcement on the very
+// next successful "still live" read a couple minutes later. Requiring a
+// few consecutive offline reads before flipping state fixes that without
+// needing an authenticated TikTok API.
+const OFFLINE_CONFIRM_THRESHOLD = 2;
+
+// username -> { isLive: boolean, offlineStreak: number }
 const knownLiveState = new Map();
 
 async function isUserLive(username) {
@@ -14,7 +24,7 @@ async function isUserLive(username) {
       redirect: 'follow',
     });
 
-    if (!res.ok) return false;
+    if (!res.ok) return null;
 
     const html = await res.text();
 
@@ -39,27 +49,40 @@ async function checkAllAccounts(client) {
     const username = account.username;
     if (!username) continue;
 
-    const live = await isUserLive(username);
-    if (live === null) continue;
+    const liveResult = await isUserLive(username);
+    if (liveResult === null) continue; // couldn't determine — leave state untouched
 
-    const wasLive = knownLiveState.get(username) || false;
-    knownLiveState.set(username, live);
+    const state = knownLiveState.get(username) || { isLive: false, offlineStreak: 0 };
 
-    if (live && !wasLive) {
-      const channel = await client.channels.fetch(channelId).catch(() => null);
-      if (!channel) continue;
+    if (liveResult) {
+      const justWentLive = !state.isLive;
+      state.isLive = true;
+      state.offlineStreak = 0;
+      knownLiveState.set(username, state);
 
-      const embed = new EmbedBuilder()
-        .setTitle(`🔴 ${username} is now LIVE on TikTok!`)
-        .setDescription(`[Click here to watch](https://www.tiktok.com/@${username}/live)`)
-        .setColor('#FF0050')
-        .setTimestamp();
+      if (justWentLive) {
+        const channel = await client.channels.fetch(channelId).catch(() => null);
+        if (!channel) continue;
 
-      const pingRoleId = config.tiktokPingRoleId;
-      const content =
-        pingRoleId && !pingRoleId.startsWith('PUT_') ? `<@&${pingRoleId}>` : undefined;
+        const embed = new EmbedBuilder()
+          .setTitle(`🔴 ${username} is now LIVE on TikTok!`)
+          .setDescription(`[Click here to watch](https://www.tiktok.com/@${username}/live)`)
+          .setColor('#FF0050')
+          .setTimestamp();
 
-      await channel.send({ content, embeds: [embed] }).catch(() => {});
+        const pingRoleId = config.tiktokPingRoleId;
+        const content =
+          pingRoleId && !pingRoleId.startsWith('PUT_') ? `<@&${pingRoleId}>` : undefined;
+
+        await channel.send({ content, embeds: [embed] }).catch(() => {});
+      }
+    } else if (state.isLive) {
+      state.offlineStreak += 1;
+      if (state.offlineStreak >= OFFLINE_CONFIRM_THRESHOLD) {
+        state.isLive = false;
+        state.offlineStreak = 0;
+      }
+      knownLiveState.set(username, state);
     }
   }
 }
