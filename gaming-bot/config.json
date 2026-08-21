@@ -123,7 +123,7 @@
     ]
   },
   "dailyGiveaway": {
-    "enabled": true,
+    "enabled": false,
     "channelId": "1532002698101002372",
     "prize": "3m Donut SMP",
     "winnerCount": 1,
