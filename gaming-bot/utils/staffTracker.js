@@ -40,8 +40,6 @@ function buildStaffEmbed(userId, stats) {
     `${stats.ticketsRenamed || 0}  - Tickets Renamed`,
     `${stats.ticketsHandled || 0}  - Tickets Handled`,
     `${stats.ticketsClosed || 0}  - Tickets Closed`,
-    `${stats.partnersCompleted || 0}  - Partners Completed`,
-    `${stats.giveawaysSponsored || 0}  -  giveaways sponsored`,
     `${stats.moderationActions || 0}  - Moderation Actions`,
   ];
 
