@@ -9,6 +9,7 @@ const {
 const config = require('../config.json');
 const { buildTranscript } = require('./transcript');
 const { buildApplicationEmbed, buildDecisionRow } = require('./applicationManager');
+const { incrementStat } = require('./staffTracker');
 
 function parseTopic(topic) {
   if (!topic || !topic.startsWith('ticket|')) return null;
@@ -87,10 +88,6 @@ async function createTicket(interaction, categoryId, answers = []) {
         PermissionsBitField.Flags.AttachFiles,
       ],
     },
-    // Explicitly grant the bot itself access — without this, the bot only
-    // gets into the channel it just created via its base server-wide
-    // permissions, which can silently fail (channel.send throwing Missing
-    // Permissions) if the bot's role isn't broadly permissioned.
     {
       id: interaction.client.user.id,
       allow: [
@@ -129,10 +126,6 @@ async function createTicket(interaction, categoryId, answers = []) {
     channelOptions.parent = config.ticketCategoryId;
   }
 
-  // Everything below can fail for reasons outside our control (missing
-  // permissions, invalid parent category, rate limits) — without a
-  // try/catch here, a throw leaves the interaction stuck on "thinking"
-  // forever with no reply and no error visible to the user.
   try {
     const channel = await guild.channels.create(channelOptions);
 
@@ -187,9 +180,6 @@ async function createApplicationTicket(guild, member, appId, appConfig, answers)
         PermissionsBitField.Flags.AttachFiles,
       ],
     },
-    // Same reasoning as createTicket above — explicitly grant the bot
-    // itself access so posting into the channel it just made can't fail
-    // silently due to relying on base server-wide permissions alone.
     {
       id: guild.members.me.id,
       allow: [
@@ -220,8 +210,6 @@ async function createApplicationTicket(guild, member, appId, appConfig, answers)
   const channelOptions = {
     name: `app-${safeName}`,
     type: ChannelType.GuildText,
-    // Reuses the same "ticket|userId|id" topic format as support tickets, so
-    // claimTicket()/closeTicket() work on application tickets for free.
     topic: `ticket|${user.id}|${appId}`,
     permissionOverwrites,
   };
@@ -277,6 +265,10 @@ async function claimTicket(interaction) {
 
   const disabledRow = buildTicketControlRow(true);
   await interaction.message.edit({ components: [disabledRow] }).catch(() => {});
+
+  incrementStat(interaction.guild, interaction.user.id, 'ticketsClaimed').catch((err) => {
+    console.error('Failed to update staff tracker for ticket claim:', err);
+  });
 }
 
 async function closeTicket(interaction, reason) {
@@ -304,6 +296,10 @@ async function closeTicket(interaction, reason) {
     .setFooter({ text: `This channel will be deleted in ${config.closeCountdownSeconds} seconds.` });
 
   await interaction.editReply({ embeds: [closeEmbed] });
+
+  incrementStat(interaction.guild, interaction.user.id, 'ticketsClosed').catch((err) => {
+    console.error('Failed to update staff tracker for ticket close:', err);
+  });
 
   try {
     const attachment = await buildTranscript(interaction.channel);
