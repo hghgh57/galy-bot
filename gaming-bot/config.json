@@ -1,7 +1,7 @@
 {
   "adminRoleIds": ["1526913504668287026"],
   "supportRoleIds": ["1526913504668287026"],
-  "staffTrackerChannelId": "1537666867890491402",
+  "staffTrackerChannelId": "",
   "changelogAnnounceChannelId": "1530572775255834696",
   "joinToCreateChannelId": "1539815781939019827",
 "joinToCreateCategoryId": "PUT_JOIN_TO_CREATE_CATEGORY_ID_HERE",
