@@ -21,7 +21,7 @@
   "tiktokAnnounceChannelId": "1495028019436195972",
   "tiktokPingRoleId": "1496446108279242762",
   "tiktokAccounts": [
-    { "username": "voidplier.exe" }
+    { "username": "" }
   ],
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
