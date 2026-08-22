@@ -3,48 +3,70 @@
   "supportRoleIds": ["1526913504668287026"],
   "staffTrackerChannelId": "1537666867890491402",
   "changelogAnnounceChannelId": "1530572775255834696",
+
   "joinToCreateChannelId": "1539815781939019827",
-"joinToCreateCategoryId": "PUT_JOIN_TO_CREATE_CATEGORY_ID_HERE",
+  "joinToCreateCategoryId": "PUT_JOIN_TO_CREATE_CATEGORY_ID_HERE",
+
   "vouchRoleId": "1526912674649083936",
-"vouchChannelId": "1527240245928656916",
-"vouchLogChannelId": "1530947462897078354",
+  "vouchChannelId": "1527240245928656916",
+  "vouchLogChannelId": "1530947462897078354",
+
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
+
   "applicationTicketCategoryId": "1533068861174452255",
+
   "welcomeChannelId": "1526915443326062735",
+
   "ticketRoleIds": ["1526936584253997146"],
   "applicationTicketRoleIds": ["1531943751939784796"],
+
   "modRoleIds": ["1526911450466222203"],
   "modLogChannelId": "1530947462897078354",
   "mutedRoleId": "1530947173666259085",
+
   "minecraftServerIp": "donutsmp.net",
+
   "tiktokAnnounceChannelId": "1495028019436195972",
   "tiktokPingRoleId": "1496446108279242762",
+
   "tiktokAccounts": [
-    { "username": "" }
+    {
+      "username": ""
+    }
   ],
+
   "maxOpenTicketsPerUser": 2,
   "closeCountdownSeconds": 2,
+
   "panel": {
     "title": "",
-    "description": "📩 **support**\nGet support from staff\n🎁 **giveaway sponsor**\nSponsor a giveaway for the server (check out faq)\n🎊 **giveaway claim**\nClaim a giveaway you won (make sure you make it before claim time is over)\n💀 **spawner sell**\nSell Spawners to staff\n-# we never go first\n💀 **spawner buy**\nBuy Spawners from staff\n-# we never go first\n🤝 **partnership**\nPartner with are server make sure to check are reqs\n🚨 **server inq**\nOpen this for serious server inquiries",
+    "description": "📩 **support**\nGet support from staff\n\n🎁 **giveaway sponsor**\nSponsor a giveaway for the server (check out faq)\n\n🎊 **giveaway claim**\nClaim a giveaway you won (make sure you make it before claim time is over)\n\n💀 **spawner sell**\nSell Spawners to staff\n-# we never go first\n\n💀 **spawner buy**\nBuy Spawners from staff\n-# we never go first\n\n🤝 **partnership**\nPartner with our server, make sure to check our requirements\n\n🚨 **server inq**\nOpen this for serious server inquiries",
+
     "color": "#5865F2",
-    "footer": "We usually respond within a few hours. dev Forrealrob."
+    "footer": "We usually respond within a few hours. Dev: Forrealrob."
   },
+
   "categories": [
     {
       "id": "support",
       "label": "Support",
       "description": "General help or questions",
       "emoji": "📩",
-      "questions": ["What do you need help with?", "What's your IGN?"]
+      "questions": [
+        "What do you need help with?",
+        "What's your IGN?"
+      ]
     },
     {
       "id": "giveaway_claim",
       "label": "Giveaway Claim",
       "description": "Claim a giveaway you won",
       "emoji": "🎉",
-      "questions": ["how much did you win?", "who was the giveaway hosted by?"]
+      "questions": [
+        "How much did you win?",
+        "Who was the giveaway hosted by?"
+      ]
     },
     {
       "id": "giveaway_sponsor",
@@ -57,30 +79,75 @@
       "label": "Spawner Buy",
       "description": "Buy spawners from staff",
       "emoji": "💀",
-      "questions": ["How many do you want to buy?", "What's your IGN?"]
+      "questions": [
+        "How many do you want to buy?",
+        "What's your IGN?"
+      ]
     },
     {
       "id": "spawner_sell",
       "label": "Spawner Sell",
       "description": "Sell spawners to staff",
       "emoji": "💀",
-      "questions": ["How many do you want to sell?", "What's your IGN?"]
+      "questions": [
+        "How many do you want to sell?",
+        "What's your IGN?"
+      ]
     },
     {
       "id": "partner",
-      "label": "partnership",
-      "description": "partner with are server",
+      "label": "Partnership",
+      "description": "Partner with our server",
       "emoji": "🤝",
-      "questions": ["How many members does your server have?", "do you agree to are reqs?"]
+      "questions": [
+        "How many members does your server have?",
+        "Do you agree to our requirements?"
+      ]
     },
     {
       "id": "inq",
-      "label": "server inquiry",
-      "description": "open a ticket for a serious inquiry",
+      "label": "Server Inquiry",
+      "description": "Open a ticket for a serious inquiry",
       "emoji": "🚨",
-      "questions": ["whats your inquiry??"]
+      "questions": [
+        "What is your inquiry?"
+      ]
     }
   ],
+
+  "serviceTicketCategoryId": "PUT_SERVICE_TICKET_CATEGORY_ID_HERE",
+
+  "serviceTicketRoleIds": [
+    "PUT_SERVICE_STAFF_ROLE_ID_HERE"
+  ],
+
+  "servicePanel": {
+    "title": "Services",
+    "description": "Select a service below to open a ticket.",
+    "color": "#5865F2"
+  },
+
+  "serviceCategories": [
+    {
+      "id": "building_service",
+      "label": "Building Service",
+      "description": "Open a ticket for a building service",
+      "emoji": "🏗️"
+    },
+    {
+      "id": "digging_service",
+      "label": "Digging Service",
+      "description": "Open a ticket for a digging service",
+      "emoji": "⛏️"
+    },
+    {
+      "id": "regears_service",
+      "label": "Regears Service",
+      "description": "Open a ticket for a regear service",
+      "emoji": "🛡️"
+    }
+  ],
+
   "applications": [
     {
       "id": "staff",
@@ -89,17 +156,18 @@
       "emoji": "🛡️",
       "color": "#5865F2",
       "reviewChannelId": "1526936497092296935",
+
       "questions": [
-        "What is your discord username discord id and minecraft ign?",
-        "What current age are you?",
-        "Why did you apply for staff here at voids's Discord rather than other servers?",
-        "share your past staff experiences?",
+        "What is your Discord username, Discord ID, and Minecraft IGN?",
+        "What is your current age?",
+        "Why did you apply for staff here rather than other servers?",
+        "Share your past staff experiences.",
         "Have you read the rules?",
         "What is your playtime and balance on DonutSMP?",
         "If someone was spamming and being toxic, how would you handle it?",
         "If someone was being racist, how would you handle it?",
         "If someone tried to bribe you to get a role or something, what would you do?",
-        "If you found out someone scammed someone, what would you do?",
+        "If you found out someone scammed another player, what would you do?",
         "What are the top 3 things to do when a ticket is opened?",
         "Do you understand that applications without very good detail will be denied?",
         "Do you understand that if you do not meet all requirements, you will be denied?"
@@ -107,29 +175,46 @@
     },
     {
       "id": "pm",
-      "label": "partner manager",
-      "description": "Apply to join the pm team",
+      "label": "Partner Manager",
+      "description": "Apply to join the Partner Manager team",
       "emoji": "🏗️",
       "color": "#5865F2",
+
       "questions": [
-        "What is your discord user and id?",
-        "How long have you been using discord?",
-        "what servers would you target to partner with",
-        "would you slack off when you get pm not trial",
-        "are you ok with being on a 1 week trial and you need to get 3 partners to get pm?"
+        "What is your Discord username and ID?",
+        "How long have you been using Discord?",
+        "What servers would you target to partner with?",
+        "Would you remain active and complete your responsibilities as a Partner Manager?",
+        "Are you okay with being on a 1-week trial and needing to get 3 partners to become a full Partner Manager?"
       ]
     }
   ],
+
   "reactionRoles": {
-    "title": "react roles",
-    "description": "Click a button below to add or remove that role. spawner price ping - get pinged for spawner prices change. giveaway ping - get pinged for giveaways. quickdrop ping - get pinged for quickdrops",
+    "title": "Reaction Roles",
+    "description": "Click a button below to add or remove a role.\n\n📢 Spawner Price Ping — Get pinged when spawner prices change.\n🎉 Giveaway Ping — Get pinged for giveaways.\n🎁 Quickdrop Ping — Get pinged for quickdrops.",
+
     "color": "#5865F2",
+
     "roles": [
-      { "roleId": "1526927178749448354", "label": "spawner price ping", "emoji": "📢" },
-      { "roleId": "1507231599056654486", "label": "Giveaway ping", "emoji": "🎉" },
-      { "roleId": "1526927287486779566", "label": "quickdrop pings", "emoji": "🎁" }
+      {
+        "roleId": "1526927178749448354",
+        "label": "Spawner Price Ping",
+        "emoji": "📢"
+      },
+      {
+        "roleId": "1507231599056654486",
+        "label": "Giveaway Ping",
+        "emoji": "🎉"
+      },
+      {
+        "roleId": "1526927287486779566",
+        "label": "Quickdrop Pings",
+        "emoji": "🎁"
+      }
     ]
   },
+
   "dailyGiveaway": {
     "enabled": false,
     "channelId": "1532002698101002372",
@@ -139,8 +224,9 @@
     "minute": 10,
     "timezone": "Australia/Sydney",
     "messageAbove": "@everyone 🎉 Daily giveaway time!",
-    "messageBelow": "Good luck everyone — winner picked in 24 hours if you win make a ticket you have 3h to claim!"
+    "messageBelow": "Good luck everyone — winner picked in 24 hours. If you win, make a ticket. You have 3 hours to claim!"
   },
+
   "antiRaid": {
     "enabled": true,
     "joinThreshold": 5,
@@ -148,19 +234,37 @@
     "minAccountAgeMinutes": 10,
     "alertChannelId": "1530947462897078354"
   },
+
   "changelog": [
-    { "version": 8, "title": "Added Antinuke/Raid Protection" },
-    { "version": 9, "title": "Added Update Changelog System" },
-    { "version": 10, "title": "Added Calculator" },
-    { "version": 11, "title": "Added auto logger" },
-    { "version": 12, "title": "daily giveaways and purge and bot trap" }
+    {
+      "version": 8,
+      "title": "Added Antinuke/Raid Protection"
+    },
+    {
+      "version": 9,
+      "title": "Added Update Changelog System"
+    },
+    {
+      "version": 10,
+      "title": "Added Calculator"
+    },
+    {
+      "version": 11,
+      "title": "Added Auto Logger"
+    },
+    {
+      "version": 12,
+      "title": "Added Daily Giveaways, Purge and Bot Trap"
+    }
   ],
+
   "dailyQuote": {
     "enabled": true,
     "channelId": "1539908403055558686",
     "hour": 10,
     "minute": 10,
     "timezone": "Australia/Sydney",
+
     "quotes": [
       "The only way to do great work is to love what you do.",
       "Success is not final, failure is not fatal: it is the courage to continue that counts.",
