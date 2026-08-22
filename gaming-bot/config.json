@@ -113,10 +113,10 @@
     }
   ],
 
-  "serviceTicketCategoryId": "PUT_SERVICE_TICKET_CATEGORY_ID_HERE",
+  "serviceTicketCategoryId": "1540667930893877278",
 
   "serviceTicketRoleIds": [
-    "PUT_SERVICE_STAFF_ROLE_ID_HERE"
+    "1540668070345838592"
   ],
 
   "servicePanel": {
