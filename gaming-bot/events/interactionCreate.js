@@ -22,6 +22,7 @@ const {
 const config = require('../config.json');
 const { loadGiveaways, saveGiveaways, buildGiveawayEmbed } = require('../utils/giveawayManager');
 const { OPTION_LABELS, buildStarsRow } = require('../utils/vouchManager');
+const { ensureStaffEmbed } = require('../utils/staffTracker');
 
 function isSupport(member) {
   const roleIds = config.supportRoleIds || [];
@@ -126,6 +127,22 @@ module.exports = {
         }));
 
         await createTicket(interaction, categoryId, answers);
+        return;
+      }
+
+      if (interaction.isUserSelectMenu() && interaction.customId === 'staff_tracker_select') {
+        await interaction.deferUpdate();
+
+        const results = [];
+        for (const userId of interaction.values) {
+          const created = await ensureStaffEmbed(interaction.guild, userId);
+          results.push(`${created ? '✅ Created' : 'ℹ️ Already exists'} — <@${userId}>`);
+        }
+
+        await interaction.editReply({
+          content: `Staff tracker setup:\n${results.join('\n')}`,
+          components: [],
+        });
         return;
       }
 
