@@ -13,7 +13,6 @@
 
   "ticketCategoryId": "1527923229480583409",
   "transcriptLogChannelId": "1527245695612878998",
-
   "applicationTicketCategoryId": "1533068861174452255",
 
   "welcomeChannelId": "1526915443326062735",
@@ -41,8 +40,7 @@
 
   "panel": {
     "title": "",
-    "description": "📩 **support**\nGet support from staff\n\n🎁 **giveaway sponsor**\nSponsor a giveaway for the server (check out faq)\n\n🎊 **giveaway claim**\nClaim a giveaway you won (make sure you make it before claim time is over)\n\n💀 **spawner sell**\nSell Spawners to staff\n-# we never go first\n\n💀 **spawner buy**\nBuy Spawners from staff\n-# we never go first\n\n🤝 **partnership**\nPartner with our server, make sure to check our requirements\n\n🚨 **server inq**\nOpen this for serious server inquiries",
-
+    "description": "📩 **support**\nGet support from staff\n\n🎁 **giveaway sponsor**\nSponsor a giveaway for the server (check out FAQ)\n\n🎊 **giveaway claim**\nClaim a giveaway you won (make sure you claim it before claim time is over)\n\n💀 **spawner sell**\nSell spawners to staff\n-# We never go first\n\n💀 **spawner buy**\nBuy spawners from staff\n-# We never go first\n\n🤝 **partnership**\nPartner with our server — make sure to check our requirements\n\n🚨 **server inq**\nOpen this for serious server inquiries",
     "color": "#5865F2",
     "footer": "We usually respond within a few hours. Dev: Forrealrob."
   },
@@ -122,8 +120,8 @@
   ],
 
   "servicePanel": {
-    "title": "Services",
-    "description": "Select a service below to open a ticket.",
+    "title": "voids cove’s services",
+    "description": "## voids cove’s services\n\n**🏗️ Building service**\nGet a schematic built (stashes, farms and more)\n\n**⛏️ Digging service**\nGet a hole dug — go see our prices\n\n**🛡️ Regear service**\nGet regear machines made, or regear shulkers.",
     "color": "#5865F2"
   },
 
@@ -131,19 +129,19 @@
     {
       "id": "building_service",
       "label": "Building Service",
-      "description": "Open a ticket for a building service",
+      "description": "Get a schematic built (stashes, farms and more)",
       "emoji": "🏗️"
     },
     {
       "id": "digging_service",
       "label": "Digging Service",
-      "description": "Open a ticket for a digging service",
+      "description": "Get a hole dug — go see our prices",
       "emoji": "⛏️"
     },
     {
       "id": "regears_service",
-      "label": "Regears Service",
-      "description": "Open a ticket for a regear service",
+      "label": "Regear Service",
+      "description": "Get regear machines made, or regear shulkers.",
       "emoji": "🛡️"
     }
   ],
@@ -156,7 +154,6 @@
       "emoji": "🛡️",
       "color": "#5865F2",
       "reviewChannelId": "1526936497092296935",
-
       "questions": [
         "What is your Discord username, Discord ID, and Minecraft IGN?",
         "What is your current age?",
@@ -176,10 +173,9 @@
     {
       "id": "pm",
       "label": "Partner Manager",
-      "description": "Apply to join the Partner Manager team",
+      "description": "Apply to join the PM team",
       "emoji": "🏗️",
       "color": "#5865F2",
-
       "questions": [
         "What is your Discord username and ID?",
         "How long have you been using Discord?",
@@ -193,9 +189,7 @@
   "reactionRoles": {
     "title": "Reaction Roles",
     "description": "Click a button below to add or remove a role.\n\n📢 Spawner Price Ping — Get pinged when spawner prices change.\n🎉 Giveaway Ping — Get pinged for giveaways.\n🎁 Quickdrop Ping — Get pinged for quickdrops.",
-
     "color": "#5865F2",
-
     "roles": [
       {
         "roleId": "1526927178749448354",
@@ -264,7 +258,6 @@
     "hour": 10,
     "minute": 10,
     "timezone": "Australia/Sydney",
-
     "quotes": [
       "The only way to do great work is to love what you do.",
       "Success is not final, failure is not fatal: it is the courage to continue that counts.",
