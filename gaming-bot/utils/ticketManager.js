@@ -53,13 +53,38 @@ function getApplicationTicketRoleIds() {
   return config.applicationTicketRoleIds || [];
 }
 
+function getServiceTicketRoleIds() {
+  const ids = (config.serviceTicketRoleIds || []).filter((id) => id && !id.startsWith('PUT_'));
+  return ids.length ? ids : getTicketRoleIds();
+}
+
 function isApplicationTicket(categoryId) {
   return (config.applications || []).some((a) => a.id === categoryId);
 }
 
+function isServiceTicket(categoryId) {
+  return (config.serviceCategories || []).some((c) => c.id === categoryId);
+}
+
+// Support tickets and service tickets both use "regular" categories, just
+// from two separate config lists — this looks across both so createTicket
+// doesn't need to know which panel a category came from.
+function findCategory(categoryId) {
+  return (
+    (config.categories || []).find((c) => c.id === categoryId) ||
+    (config.serviceCategories || []).find((c) => c.id === categoryId)
+  );
+}
+
+function getRoleIdsForTicket(categoryId) {
+  if (isApplicationTicket(categoryId)) return getApplicationTicketRoleIds();
+  if (isServiceTicket(categoryId)) return getServiceTicketRoleIds();
+  return getTicketRoleIds();
+}
+
 async function createTicket(interaction, categoryId, answers = []) {
   const { guild, user } = interaction;
-  const category = config.categories.find((c) => c.id === categoryId);
+  const category = findCategory(categoryId);
   if (!category) {
     return interaction.reply({ content: 'Unknown ticket category.', ephemeral: true });
   }
@@ -88,6 +113,10 @@ async function createTicket(interaction, categoryId, answers = []) {
         PermissionsBitField.Flags.AttachFiles,
       ],
     },
+    // Explicitly grant the bot itself access — without this, the bot only
+    // gets into the channel it just created via its base server-wide
+    // permissions, which can silently fail (channel.send throwing Missing
+    // Permissions) if the bot's role isn't broadly permissioned.
     {
       id: interaction.client.user.id,
       allow: [
@@ -100,7 +129,7 @@ async function createTicket(interaction, categoryId, answers = []) {
     },
   ];
 
-  for (const roleId of getTicketRoleIds()) {
+  for (const roleId of getRoleIdsForTicket(categoryId)) {
     if (!roleId || roleId.startsWith('PUT_')) continue;
     permissionOverwrites.push({
       id: roleId,
@@ -122,10 +151,18 @@ async function createTicket(interaction, categoryId, answers = []) {
     permissionOverwrites,
   };
 
-  if (config.ticketCategoryId && !config.ticketCategoryId.startsWith('PUT_')) {
+  if (isServiceTicket(categoryId)) {
+    if (config.serviceTicketCategoryId && !config.serviceTicketCategoryId.startsWith('PUT_')) {
+      channelOptions.parent = config.serviceTicketCategoryId;
+    }
+  } else if (config.ticketCategoryId && !config.ticketCategoryId.startsWith('PUT_')) {
     channelOptions.parent = config.ticketCategoryId;
   }
 
+  // Everything below can fail for reasons outside our control (missing
+  // permissions, invalid parent category, rate limits) — without a
+  // try/catch here, a throw leaves the interaction stuck on "thinking"
+  // forever with no reply and no error visible to the user.
   try {
     const channel = await guild.channels.create(channelOptions);
 
@@ -143,7 +180,7 @@ async function createTicket(interaction, categoryId, answers = []) {
       welcomeEmbed.addFields(answers.map((a) => ({ name: a.question, value: a.answer || 'No answer' })));
     }
 
-    const mentions = getTicketRoleIds()
+    const mentions = getRoleIdsForTicket(categoryId)
       .filter((id) => id && !id.startsWith('PUT_'))
       .map((id) => `<@&${id}>`)
       .join(' ');
@@ -180,6 +217,9 @@ async function createApplicationTicket(guild, member, appId, appConfig, answers)
         PermissionsBitField.Flags.AttachFiles,
       ],
     },
+    // Same reasoning as createTicket above — explicitly grant the bot
+    // itself access so posting into the channel it just made can't fail
+    // silently due to relying on base server-wide permissions alone.
     {
       id: guild.members.me.id,
       allow: [
@@ -210,6 +250,8 @@ async function createApplicationTicket(guild, member, appId, appConfig, answers)
   const channelOptions = {
     name: `app-${safeName}`,
     type: ChannelType.GuildText,
+    // Reuses the same "ticket|userId|id" topic format as support tickets, so
+    // claimTicket()/closeTicket() work on application tickets for free.
     topic: `ticket|${user.id}|${appId}`,
     permissionOverwrites,
   };
@@ -251,7 +293,7 @@ async function claimTicket(interaction) {
   }
 
   const member = interaction.member;
-  const roleIds = isApplicationTicket(meta.categoryId) ? getApplicationTicketRoleIds() : getTicketRoleIds();
+  const roleIds = getRoleIdsForTicket(meta.categoryId);
   const isTicketStaff = roleIds.some((id) => member.roles.cache.has(id));
   if (!isTicketStaff && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
     return interaction.reply({ content: 'Only ticket staff can claim tickets.', ephemeral: true });
@@ -266,7 +308,7 @@ async function claimTicket(interaction) {
   const disabledRow = buildTicketControlRow(true);
   await interaction.message.edit({ components: [disabledRow] }).catch(() => {});
 
-  incrementStat(interaction.guild, interaction.user.id, 'ticketsClaimed').catch((err) => {
+  incrementStat(interaction.guild, interaction.user.id, 'ticketsHandled').catch((err) => {
     console.error('Failed to update staff tracker for ticket claim:', err);
   });
 }
@@ -278,7 +320,7 @@ async function closeTicket(interaction, reason) {
   }
 
   const member = interaction.member;
-  const roleIds = isApplicationTicket(meta.categoryId) ? getApplicationTicketRoleIds() : getTicketRoleIds();
+  const roleIds = getRoleIdsForTicket(meta.categoryId);
   const isTicketStaff = roleIds.some((id) => member.roles.cache.has(id));
   const isOwner = member.id === meta.userId;
   if (!isTicketStaff && !isOwner && !member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
@@ -300,6 +342,19 @@ async function closeTicket(interaction, reason) {
   incrementStat(interaction.guild, interaction.user.id, 'ticketsClosed').catch((err) => {
     console.error('Failed to update staff tracker for ticket close:', err);
   });
+
+  // Closing a "partner" or "giveaway_sponsor" category ticket also counts
+  // as completing that specific type of work, on top of the general
+  // ticketsClosed count.
+  if (meta.categoryId === 'partner') {
+    incrementStat(interaction.guild, interaction.user.id, 'partnersCompleted').catch((err) => {
+      console.error('Failed to update staff tracker for partner completion:', err);
+    });
+  } else if (meta.categoryId === 'giveaway_sponsor') {
+    incrementStat(interaction.guild, interaction.user.id, 'giveawaysSponsored').catch((err) => {
+      console.error('Failed to update staff tracker for giveaway sponsorship:', err);
+    });
+  }
 
   try {
     const attachment = await buildTranscript(interaction.channel);
@@ -346,4 +401,6 @@ module.exports = {
   closeTicket,
   parseTopic,
   buildTicketControlRow,
+  findCategory,
+  isServiceTicket,
 };
