@@ -70,8 +70,15 @@
       "id": "partner",
       "label": "partnership",
       "description": "partner with are server",
-      "emoji": "",
+      "emoji": "🤝",
       "questions": ["How many members does your server have?", "do you agree to are reqs?"]
+    },
+    {
+      "id": "inq",
+      "label": "server inquiry",
+      "description": "open a ticket for a serious inquiry",
+      "emoji": "🚨",
+      "questions": ["whats your inquiry??"]
     }
   ],
   "applications": [
