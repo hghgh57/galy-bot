@@ -130,19 +130,19 @@
       "id": "building_service",
       "label": "Building Service",
       "description": "Get a schematic built (stashes, farms and more)",
-      "emoji": "🏗️"
+      "emoji": "<:500913house:1540691352000659486>"
     },
     {
       "id": "digging_service",
       "label": "Digging Service",
       "description": "Get a hole dug — go see our prices",
-      "emoji": "⛏️"
+      "emoji": "<:234951minecraftdiamondshovel:1540691325815627778>"
     },
     {
       "id": "regears_service",
       "label": "Regear Service",
       "description": "Get regear machines made, or regear shulkers.",
-      "emoji": "🛡️"
+      "emoji": "<:927346endcrystal:1540691299902951515>"
     }
   ],
 
