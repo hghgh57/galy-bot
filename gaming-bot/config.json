@@ -121,7 +121,7 @@
 
   "servicePanel": {
     "title": "",
-  "description": ":221885minecraftletterv: :971161minecraftlettero: :551854minecraftletteri: :925443minecraftletterd: :54759minecraftletters: :419254minecraftletterc: :971161minecraftlettero: :221885minecraftletterv: :447990minecraftlettere:\n**services**\n\n:500913house: **building service**\nOpen a ticket if you need a base built from a schematic.\nSend the schematic file or link.\n⚡️ **Rush priority**\n+12% extra for priority.\nPlease read our <#1540949443187052544>\n\n:927346endcrystal: **regear service**\nGet regear shulks made by our regear team | pay the cost of the shulks +20% on top of that.\n\n:234951minecraftdiamondshovel: **digging service**\nPlease provide L x W x H"
+    "description": ":221885minecraftletterv: :971161minecraftlettero: :551854minecraftletteri: :925443minecraftletterd: :54759minecraftletters: :419254minecraftletterc: :971161minecraftlettero: :221885minecraftletterv: :447990minecraftlettere:\n**services**\n\n:500913house: **building service**\nOpen a ticket if you need a base built from a schematic.\nSend the schematic file or link.\n⚡️ **Rush priority**\n+12% extra for priority.\nPlease read our <#1540949443187052544>\n\n:927346endcrystal: **regear service**\nGet regear shulks made by our regear team | pay the cost of the shulks +20% on top of that.\n\n:234951minecraftdiamondshovel: **digging service**\nPlease provide L x W x H",
     "color": "#5865F2"
   },
 
@@ -130,22 +130,28 @@
       "id": "building_service",
       "label": "Building Service",
       "description": "Get a schematic built (stashes, farms and more)",
-      "emoji": "<:500913house:1540691352000659486>"
-      "roleIds": [1540894256497958972]
-      "roleIds": [1540895318240133219]
+      "emoji": "<:500913house:1540691352000659486>",
+      "roleIds": [
+        "1540894256497958972"
+      ]
     },
     {
       "id": "digging_service",
       "label": "Digging Service",
       "description": "Get a hole dug — go see our prices",
-      "emoji": "<:234951minecraftdiamondshovel:1540691325815627778>"
-      "roleIds": [1540894256497958972
+      "emoji": "<:234951minecraftdiamondshovel:1540691325815627778>",
+      "roleIds": [
+        "1540895318240133219"
+      ]
+    },
     {
       "id": "regears_service",
       "label": "Regear Service",
       "description": "Get regear machines made, or regear shulkers.",
-      "emoji": "<:927346endcrystal:1540691299902951515>"
-      "roleIds": [1540894539206754357]
+      "emoji": "<:927346endcrystal:1540691299902951515>",
+      "roleIds": [
+        "1540894539206754357"
+      ]
     }
   ],
 
