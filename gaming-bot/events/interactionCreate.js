@@ -22,6 +22,7 @@ const {
 const {
   startDmApplication,
   handleDmApplicationStart,
+  handleDmApplicationQuestion,
   handleDmApplicationCancel,
 } = require('../utils/dmApplication');
 
@@ -74,10 +75,13 @@ async function resetTicketDropdown(message) {
     .addOptions(
       categories.map((cat) => ({
         label: String(cat.label || cat.id).slice(0, 100),
+
         description: String(
           cat.description || 'Open a ticket'
         ).slice(0, 100),
+
         value: String(cat.id),
+
         emoji: cat.emoji || undefined,
       }))
     );
@@ -201,6 +205,7 @@ function buildQuestionsModal(category) {
   questions
     .slice(0, 5)
     .forEach((question, i) => {
+
       const input =
         new TextInputBuilder()
           .setCustomId(
@@ -274,6 +279,7 @@ module.exports = {
       if (
         interaction.isChatInputCommand()
       ) {
+
         const command =
           interaction.client.commands.get(
             interaction.commandName
@@ -341,24 +347,24 @@ module.exports = {
             )
           );
 
-          /*
-            Only reset the dropdown after
-            showing the modal.
-          */
 
           if (
             interaction.customId ===
             'ticket_category_select'
           ) {
+
             await resetTicketDropdown(
               interaction.message
             );
+
           }
 
           else {
+
             await resetServiceTicketDropdown(
               interaction.message
             );
+
           }
 
           return;
@@ -397,6 +403,25 @@ module.exports = {
           );
 
         }
+
+        return;
+      }
+
+
+      /* =========================
+         DM APPLICATION QUESTION MODAL
+      ========================= */
+
+      if (
+        interaction.isModalSubmit() &&
+        interaction.customId.startsWith(
+          'dmapp_question_'
+        )
+      ) {
+
+        await handleDmApplicationQuestion(
+          interaction
+        );
 
         return;
       }
@@ -1257,13 +1282,14 @@ module.exports = {
 
 
           /*
+            Application button format:
+
+            app_accept_USERID_APPID
+            app_deny_USERID_APPID
+
             Split at the first underscore
-            so IDs like:
-
-            staff_application
-            builder_application
-
-            still work.
+            so application IDs can contain
+            underscores.
           */
 
           const separator =
