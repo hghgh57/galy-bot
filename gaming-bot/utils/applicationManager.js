@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const {
   ActionRowBuilder,
   ButtonBuilder,
@@ -10,33 +13,142 @@ const {
 
 const config = require('../config.json');
 
-const {
-  savePartial,
-  getPartial,
-  clearPartial,
-  markApplied,
-  clearApplied,
-} = require('./applicationManager');
+/* =========================================================
+   APPLICATION STATE
+========================================================= */
 
-const {
-  createApplicationTicket,
-} = require('./ticketManager');
+const pendingApplications = new Map();
 
+function applicationKey(userId, appId) {
+  return `${userId}:${appId}`;
+}
 
-/* =========================
-   FIND APPLICATION
-========================= */
+function savePartial(userId, appId, answers) {
+  const key = applicationKey(userId, appId);
 
-function getApplication(appId) {
-  return (config.applications || []).find(
-    (app) => app.id === appId
+  pendingApplications.set(key, {
+    answers: Array.isArray(answers) ? answers : [],
+    createdAt: Date.now(),
+  });
+
+  // Automatically remove unfinished applications after 30 minutes
+  setTimeout(() => {
+    pendingApplications.delete(key);
+  }, 30 * 60 * 1000);
+}
+
+function getPartial(userId, appId) {
+  const data = pendingApplications.get(
+    applicationKey(userId, appId)
+  );
+
+  if (!data) return null;
+
+  return data.answers;
+}
+
+function clearPartial(userId, appId) {
+  pendingApplications.delete(
+    applicationKey(userId, appId)
   );
 }
 
+/* =========================================================
+   PERSISTENT APPLICATION STATUS
+========================================================= */
 
-/* =========================
-   START APPLICATION
-========================= */
+const DATA_DIR =
+  process.env.DATA_DIR || '/app/data';
+
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, {
+    recursive: true,
+  });
+}
+
+const APPLIED_FILE =
+  path.join(DATA_DIR, 'applied.json');
+
+function loadApplied() {
+  if (!fs.existsSync(APPLIED_FILE)) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(
+      fs.readFileSync(
+        APPLIED_FILE,
+        'utf8'
+      )
+    );
+  } catch (err) {
+    console.error(
+      'Failed to read applied.json:',
+      err
+    );
+
+    return {};
+  }
+}
+
+function saveApplied(data) {
+  try {
+    fs.writeFileSync(
+      APPLIED_FILE,
+      JSON.stringify(data, null, 2)
+    );
+  } catch (err) {
+    console.error(
+      'Failed to save applied.json:',
+      err
+    );
+  }
+}
+
+function hasApplied(userId, appId) {
+  const data = loadApplied();
+
+  return Boolean(
+    data[applicationKey(userId, appId)]
+  );
+}
+
+function markApplied(userId, appId) {
+  const data = loadApplied();
+
+  data[applicationKey(userId, appId)] = {
+    status: 'pending',
+    createdAt: Date.now(),
+  };
+
+  saveApplied(data);
+}
+
+function clearApplied(userId, appId) {
+  const data = loadApplied();
+
+  delete data[
+    applicationKey(userId, appId)
+  ];
+
+  saveApplied(data);
+}
+
+/* =========================================================
+   FIND APPLICATION
+========================================================= */
+
+function getApplication(appId) {
+  return (
+    config.applications || []
+  ).find(
+    app => app.id === appId
+  );
+}
+
+/* =========================================================
+   START APPLICATION DM
+========================================================= */
 
 async function startDmApplication(
   guild,
@@ -47,31 +159,52 @@ async function startDmApplication(
   try {
     const dm = await user.createDM();
 
-    const embed = new EmbedBuilder()
-      .setTitle(`📋 ${appConfig.label}`)
-      .setDescription(
-        `You are about to apply for **${appConfig.label}** in **${guild.name}**.\n\n` +
-        `You will be asked ${appConfig.questions.length} questions.\n\n` +
-        `Please answer every question honestly and with as much detail as possible.`
-      )
-      .setColor(appConfig.color || '#5865F2')
-      .setFooter({
-        text: 'You can cancel the application at any time.'
-      });
+    const embed =
+      new EmbedBuilder()
+        .setTitle(
+          `📋 ${appConfig.label}`
+        )
+        .setDescription(
+          `You are about to apply for **${appConfig.label}** in **${guild.name}**.\n\n` +
+          `You will be asked **${appConfig.questions.length} questions**.\n\n` +
+          `Please answer every question honestly and with as much detail as possible.`
+        )
+        .setColor(
+          appConfig.color ||
+          '#5865F2'
+        )
+        .setFooter({
+          text:
+            'You can cancel the application at any time.',
+        });
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`dmapp_start_${guild.id}_${appId}`)
-        .setLabel('Start Application')
-        .setEmoji('📋')
-        .setStyle(ButtonStyle.Primary),
+    const row =
+      new ActionRowBuilder()
+        .addComponents(
 
-      new ButtonBuilder()
-        .setCustomId(`dmapp_cancel_${guild.id}_${appId}`)
-        .setLabel('Cancel')
-        .setEmoji('❌')
-        .setStyle(ButtonStyle.Danger)
-    );
+          new ButtonBuilder()
+            .setCustomId(
+              `dmapp_start_${guild.id}_${appId}`
+            )
+            .setLabel(
+              'Start Application'
+            )
+            .setEmoji('📋')
+            .setStyle(
+              ButtonStyle.Primary
+            ),
+
+          new ButtonBuilder()
+            .setCustomId(
+              `dmapp_cancel_${guild.id}_${appId}`
+            )
+            .setLabel('Cancel')
+            .setEmoji('❌')
+            .setStyle(
+              ButtonStyle.Danger
+            )
+
+        );
 
     await dm.send({
       embeds: [embed],
@@ -81,8 +214,9 @@ async function startDmApplication(
     return true;
 
   } catch (err) {
+
     console.error(
-      'Failed to start DM application:',
+      'Failed to DM application:',
       err
     );
 
@@ -90,173 +224,201 @@ async function startDmApplication(
   }
 }
 
-
-/* =========================
+/* =========================================================
    BUILD QUESTION MODAL
-========================= */
+========================================================= */
 
 function buildQuestionModal(
   appId,
   questionIndex,
   question
 ) {
-  const modal = new ModalBuilder()
-    .setCustomId(
-      `dmapp_question_${appId}_${questionIndex}`
-    )
-    .setTitle(
-      `Question ${questionIndex + 1}`
-    );
 
-  const input = new TextInputBuilder()
-    .setCustomId('answer')
-    .setLabel(
-      String(question).slice(0, 45)
-    )
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true)
-    .setMaxLength(1000);
+  const modal =
+    new ModalBuilder()
+      .setCustomId(
+        `dmapp_question_${appId}_${questionIndex}`
+      )
+      .setTitle(
+        `Question ${questionIndex + 1}`
+      );
+
+  const input =
+    new TextInputBuilder()
+      .setCustomId('answer')
+      .setLabel(
+        String(question).slice(0, 45)
+      )
+      .setStyle(
+        TextInputStyle.Paragraph
+      )
+      .setRequired(true)
+      .setMaxLength(1000);
 
   modal.addComponents(
-    new ActionRowBuilder().addComponents(input)
+    new ActionRowBuilder()
+      .addComponents(input)
   );
 
   return modal;
 }
 
-
-/* =========================
-   START BUTTON
-========================= */
+/* =========================================================
+   START APPLICATION
+========================================================= */
 
 async function handleDmApplicationStart(
   interaction,
-  appId,
-  guildIdOverride = null
+  encodedData
 ) {
-  const parts = appId.split('_');
+
+  let guildId;
+  let appId;
 
   /*
-    The button format is:
+    Button:
 
     dmapp_start_GUILDID_APPID
-
-    We therefore need to recover the guild ID
-    and application ID.
-
-    Because Discord IDs are numeric and app IDs
-    are normally words, find the first non-numeric
-    section.
   */
 
-  let guildId = guildIdOverride;
-  let realAppId = appId;
+  const match =
+    encodedData.match(
+      /^(\d+)_(.+)$/
+    );
 
-  if (!guildId) {
-    const match = appId.match(/^(\d+)_(.+)$/);
-
-    if (match) {
-      guildId = match[1];
-      realAppId = match[2];
-    }
+  if (match) {
+    guildId = match[1];
+    appId = match[2];
+  } else {
+    appId = encodedData;
   }
 
-  const appConfig = getApplication(realAppId);
+  const appConfig =
+    getApplication(appId);
 
   if (!appConfig) {
     return interaction.reply({
-      content: '❌ That application no longer exists.',
+      content:
+        '❌ That application no longer exists.',
       ephemeral: true,
     });
   }
 
   const guild =
-    interaction.client.guilds.cache.get(guildId);
+    interaction.client.guilds.cache.get(
+      guildId
+    );
 
   if (!guild) {
     return interaction.reply({
-      content: '❌ I could not find the server for this application.',
-      ephemeral: true,
-    });
-  }
-
-  const alreadyApplied = getPartial(
-    interaction.user.id,
-    realAppId
-  );
-
-  if (alreadyApplied) {
-    return interaction.reply({
       content:
-        '❌ You already have an application in progress.',
+        '❌ I could not find the server for this application.',
       ephemeral: true,
     });
   }
 
   /*
-    Start with an empty answer array.
+    IMPORTANT:
+
+    Only block them if they actually have an
+    application waiting for staff.
+
+    An unfinished application is NOT permanent.
   */
+
+  if (
+    hasApplied(
+      interaction.user.id,
+      appId
+    )
+  ) {
+    return interaction.reply({
+      content:
+        '❌ You already have a pending application for this position.',
+      ephemeral: true,
+    });
+  }
+
+  /*
+    If there is an old unfinished application,
+    clear it so they can start again.
+  */
+
+  clearPartial(
+    interaction.user.id,
+    appId
+  );
 
   savePartial(
     interaction.user.id,
-    realAppId,
+    appId,
     []
   );
 
+  if (
+    !appConfig.questions ||
+    !appConfig.questions.length
+  ) {
+    return interaction.reply({
+      content:
+        '❌ This application has no questions configured.',
+      ephemeral: true,
+    });
+  }
+
   await interaction.showModal(
     buildQuestionModal(
-      realAppId,
+      appId,
       0,
       appConfig.questions[0]
     )
   );
 }
 
-
-/* =========================
-   HANDLE QUESTION
-========================= */
+/* =========================================================
+   HANDLE APPLICATION QUESTION
+========================================================= */
 
 async function handleDmApplicationQuestion(
   interaction
 ) {
+
   const customId =
     interaction.customId.replace(
       'dmapp_question_',
       ''
     );
 
-  /*
-    Format:
-
-    dmapp_question_APPID_INDEX
-
-    Example:
-
-    dmapp_question_staff_0
-  */
-
   const lastUnderscore =
     customId.lastIndexOf('_');
 
   if (lastUnderscore === -1) {
     return interaction.reply({
-      content: '❌ Invalid application question.',
+      content:
+        '❌ Invalid application question.',
       ephemeral: true,
     });
   }
 
   const appId =
-    customId.slice(0, lastUnderscore);
+    customId.slice(
+      0,
+      lastUnderscore
+    );
 
   const questionIndex =
     Number(
-      customId.slice(lastUnderscore + 1)
+      customId.slice(
+        lastUnderscore + 1
+      )
     );
 
-  if (Number.isNaN(questionIndex)) {
+  if (
+    Number.isNaN(questionIndex)
+  ) {
     return interaction.reply({
-      content: '❌ Invalid question number.',
+      content:
+        '❌ Invalid question number.',
       ephemeral: true,
     });
   }
@@ -266,7 +428,20 @@ async function handleDmApplicationQuestion(
 
   if (!appConfig) {
     return interaction.reply({
-      content: '❌ That application no longer exists.',
+      content:
+        '❌ That application no longer exists.',
+      ephemeral: true,
+    });
+  }
+
+  if (
+    questionIndex < 0 ||
+    questionIndex >=
+      appConfig.questions.length
+  ) {
+    return interaction.reply({
+      content:
+        '❌ Invalid application question.',
       ephemeral: true,
     });
   }
@@ -282,89 +457,86 @@ async function handleDmApplicationQuestion(
       appId
     ) || [];
 
-  currentAnswers[questionIndex] = answer;
-
-  /*
-    More questions remain.
-  */
+  currentAnswers[
+    questionIndex
+  ] = answer;
 
   const nextIndex =
     questionIndex + 1;
+
+  /*
+    MORE QUESTIONS
+  */
 
   if (
     nextIndex <
     appConfig.questions.length
   ) {
+
     savePartial(
       interaction.user.id,
       appId,
       currentAnswers
     );
 
-    await interaction.showModal(
+    return interaction.showModal(
       buildQuestionModal(
         appId,
         nextIndex,
-        appConfig.questions[nextIndex]
+        appConfig.questions[
+          nextIndex
+        ]
       )
     );
-
-    return;
   }
 
   /*
     FINAL QUESTION
   */
 
-  try {
-    await interaction.deferReply({
-      ephemeral: true,
-    });
+  await interaction.deferReply({
+    ephemeral: true,
+  });
 
-    const guild =
-      config.guildId
-        ? interaction.client.guilds.cache.get(
-            config.guildId
-          )
-        : interaction.client.guilds.cache.find(
-            (g) =>
-              g.members.cache.has(
-                interaction.user.id
-              )
-          );
+  try {
 
     /*
-      Better fallback:
-      find the guild where the application panel
-      exists / user is a member.
+      Find the guild from the application
+      panel / user's membership.
     */
 
-    let targetGuild = guild;
+    let targetGuild = null;
+
+    if (config.guildId) {
+      targetGuild =
+        interaction.client.guilds.cache.get(
+          config.guildId
+        );
+    }
 
     if (!targetGuild) {
       for (
-        const server
-        of interaction.client.guilds.cache.values()
+        const guild of
+        interaction.client.guilds.cache.values()
       ) {
+
         const member =
-          await server.members
-            .fetch(interaction.user.id)
+          await guild.members
+            .fetch(
+              interaction.user.id
+            )
             .catch(() => null);
 
         if (member) {
-          targetGuild = server;
+          targetGuild = guild;
           break;
         }
       }
     }
 
     if (!targetGuild) {
-      clearPartial(
-        interaction.user.id,
-        appId
-      );
 
-      clearApplied(
+      clearPartial(
         interaction.user.id,
         appId
       );
@@ -377,60 +549,38 @@ async function handleDmApplicationQuestion(
 
     const member =
       await targetGuild.members
-        .fetch(interaction.user.id)
+        .fetch(
+          interaction.user.id
+        )
         .catch(() => null);
 
     if (!member) {
-      clearPartial(
-        interaction.user.id,
-        appId
-      );
 
-      clearApplied(
+      clearPartial(
         interaction.user.id,
         appId
       );
 
       return interaction.editReply({
         content:
-          '❌ I could not find you in the server.',
+          '❌ You are not a member of the server.',
       });
     }
 
     /*
-      Mark the application as pending.
+      CREATE THE APPLICATION TICKET FIRST.
+
+      We only mark the user as applied AFTER
+      the ticket successfully exists.
+
+      This fixes the "it locks and I can't
+      click it again" problem when ticket
+      creation fails.
     */
 
-    markApplied(
-      interaction.user.id,
-      appId
-    );
-
-    /*
-      Convert answers into the format expected
-      by buildApplicationEmbed().
-    */
-
-    const answers = appConfig.questions.map(
-      (question, index) => ({
-        question,
-        answer:
-          currentAnswers[index] ||
-          'No answer',
-      })
-    );
-
-    /*
-      CREATE APPLICATION TICKET.
-
-      IMPORTANT:
-      This uses createApplicationTicket()
-      instead of createTicket().
-
-      That means it gets the application
-      review channel, accept/deny buttons,
-      application roles, etc.
-    */
+    const {
+      createApplicationTicket,
+    } = require('./ticketManager');
 
     const channel =
       await createApplicationTicket(
@@ -441,10 +591,33 @@ async function handleDmApplicationQuestion(
         currentAnswers
       );
 
+    if (!channel) {
+      throw new Error(
+        'Application ticket was not created.'
+      );
+    }
+
+    /*
+      NOW mark application as pending.
+    */
+
+    markApplied(
+      interaction.user.id,
+      appId
+    );
+
+    /*
+      Clear temporary answers.
+    */
+
     clearPartial(
       interaction.user.id,
       appId
     );
+
+    /*
+      Confirm to the applicant.
+    */
 
     await interaction.editReply({
       content:
@@ -453,22 +626,30 @@ async function handleDmApplicationQuestion(
     });
 
     /*
-      Optional confirmation DM.
+      Send confirmation DM.
+
+      Failure here should NOT make the
+      application fail.
     */
 
-    if (channel) {
-      await interaction.user
-        .send(
-          `📋 Your **${appConfig.label}** application has been submitted to **${targetGuild.name}**.`
-        )
-        .catch(() => {});
-    }
+    await interaction.user
+      .send(
+        `📋 Your **${appConfig.label}** application has been submitted to **${targetGuild.name}**.`
+      )
+      .catch(() => {});
 
   } catch (err) {
+
     console.error(
       'Failed to submit application:',
       err
     );
+
+    /*
+      CRITICAL:
+      If ticket creation failed, remove
+      the temporary application lock.
+    */
 
     clearPartial(
       interaction.user.id,
@@ -480,69 +661,195 @@ async function handleDmApplicationQuestion(
       appId
     );
 
-    if (
-      interaction.deferred ||
-      interaction.replied
-    ) {
-      await interaction.editReply({
-        content:
-          '❌ Something went wrong submitting your application. Please try again.',
-      }).catch(() => {});
-    } else {
-      await interaction.reply({
-        content:
-          '❌ Something went wrong submitting your application. Please try again.',
-        ephemeral: true,
-      }).catch(() => {});
-    }
+    await interaction.editReply({
+      content:
+        '❌ Something went wrong submitting your application. You have NOT been locked out — please try again.',
+    }).catch(() => {});
   }
 }
 
-
-/* =========================
-   CANCEL
-========================= */
+/* =========================================================
+   CANCEL APPLICATION
+========================================================= */
 
 async function handleDmApplicationCancel(
   interaction,
-  appId
+  encodedData
 ) {
-  const match =
-    appId.match(/^(\d+)_(.+)$/);
 
-  let realAppId = appId;
+  let appId = encodedData;
+
+  const match =
+    encodedData.match(
+      /^(\d+)_(.+)$/
+    );
 
   if (match) {
-    realAppId = match[2];
+    appId = match[2];
   }
 
   clearPartial(
     interaction.user.id,
-    realAppId
+    appId
   );
 
   clearApplied(
     interaction.user.id,
-    realAppId
+    appId
   );
 
   await interaction.update({
     embeds: [
       new EmbedBuilder()
-        .setTitle('Application Cancelled')
-        .setDescription(
-          'Your application has been cancelled.'
+        .setTitle(
+          'Application Cancelled'
         )
-        .setColor('#ED4245')
+        .setDescription(
+          'Your application has been cancelled. You can apply again whenever you want.'
+        )
+        .setColor('#ED4245'),
     ],
     components: [],
   });
 }
 
+/* =========================================================
+   APPLICATION EMBED
+========================================================= */
+
+function buildApplicationEmbed(
+  member,
+  appConfig,
+  answers
+) {
+
+  const embed =
+    new EmbedBuilder()
+      .setTitle(
+        `📋 New Application: ${appConfig.label}`
+      )
+      .setColor(
+        appConfig.color ||
+        '#5865F2'
+      )
+      .setThumbnail(
+        member.user.displayAvatarURL()
+      )
+      .addFields({
+        name: 'Applicant',
+        value:
+          `${member} (${member.user.tag})`,
+        inline: false,
+      })
+      .setFooter({
+        text:
+          `User ID: ${member.id}`,
+      })
+      .setTimestamp();
+
+  appConfig.questions.forEach(
+    (question, index) => {
+
+      let answer =
+        answers[index] ||
+        'No answer';
+
+      /*
+        Discord embed fields cannot exceed
+        1024 characters.
+      */
+
+      if (answer.length > 1024) {
+        answer =
+          answer.slice(0, 1021) +
+          '...';
+      }
+
+      let questionName =
+        String(question);
+
+      if (questionName.length > 256) {
+        questionName =
+          questionName.slice(
+            0,
+            253
+          ) + '...';
+      }
+
+      embed.addFields({
+        name: questionName,
+        value: answer,
+        inline: false,
+      });
+    }
+  );
+
+  return embed;
+}
+
+/* =========================================================
+   ACCEPT / DENY BUTTONS
+========================================================= */
+
+function buildDecisionRow(
+  userId,
+  appId,
+  disabled = false
+) {
+
+  return new ActionRowBuilder()
+    .addComponents(
+
+      new ButtonBuilder()
+        .setCustomId(
+          `app_accept_${userId}_${appId}`
+        )
+        .setLabel('Accept')
+        .setEmoji('✅')
+        .setStyle(
+          ButtonStyle.Success
+        )
+        .setDisabled(disabled),
+
+      new ButtonBuilder()
+        .setCustomId(
+          `app_deny_${userId}_${appId}`
+        )
+        .setLabel('Deny')
+        .setEmoji('❌')
+        .setStyle(
+          ButtonStyle.Danger
+        )
+        .setDisabled(disabled)
+
+    );
+}
+
+/* =========================================================
+   EXPORTS
+========================================================= */
 
 module.exports = {
+
+  // Application state
+  savePartial,
+  getPartial,
+  clearPartial,
+
+  hasApplied,
+  markApplied,
+  clearApplied,
+
+  // Application configuration
+  getApplication,
+
+  // DM application
   startDmApplication,
   handleDmApplicationStart,
   handleDmApplicationQuestion,
   handleDmApplicationCancel,
+
+  // Application ticket display
+  buildApplicationEmbed,
+  buildDecisionRow,
 };
