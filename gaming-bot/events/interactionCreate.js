@@ -44,9 +44,9 @@ const {
 } = require('../utils/staffTracker');
 
 
-/* =========================
+/* =========================================================
    SUPPORT CHECK
-========================= */
+========================================================= */
 
 function isSupport(member) {
   const roleIds = config.supportRoleIds || [];
@@ -60,11 +60,13 @@ function isSupport(member) {
 }
 
 
-/* =========================
+/* =========================================================
    RESET NORMAL TICKET DROPDOWN
-========================= */
+========================================================= */
 
 async function resetTicketDropdown(message) {
+  if (!message) return;
+
   const categories = config.categories || [];
 
   if (!categories.length) return;
@@ -73,17 +75,19 @@ async function resetTicketDropdown(message) {
     .setCustomId('ticket_category_select')
     .setPlaceholder('Select a ticket category…')
     .addOptions(
-      categories.map((cat) => ({
-        label: String(cat.label || cat.id).slice(0, 100),
+      categories
+        .slice(0, 25)
+        .map((cat) => ({
+          label: String(cat.label || cat.id).slice(0, 100),
 
-        description: String(
-          cat.description || 'Open a ticket'
-        ).slice(0, 100),
+          description: String(
+            cat.description || 'Open a ticket'
+          ).slice(0, 100),
 
-        value: String(cat.id),
+          value: String(cat.id),
 
-        emoji: cat.emoji || undefined,
-      }))
+          emoji: cat.emoji || undefined,
+        }))
     );
 
   await message
@@ -92,42 +96,43 @@ async function resetTicketDropdown(message) {
         new ActionRowBuilder().addComponents(menu),
       ],
     })
-    .catch(() => {});
+    .catch((err) => {
+      console.error(
+        'Failed to reset ticket dropdown:',
+        err
+      );
+    });
 }
 
 
-/* =========================
+/* =========================================================
    RESET SERVICE TICKET DROPDOWN
-========================= */
+========================================================= */
 
 async function resetServiceTicketDropdown(message) {
-  const categories =
-    config.serviceCategories || [];
+  if (!message) return;
+
+  const categories = config.serviceCategories || [];
 
   if (!categories.length) return;
 
   const menu = new StringSelectMenuBuilder()
-    .setCustomId(
-      'service_ticket_category_select'
-    )
-    .setPlaceholder(
-      'Select a service…'
-    )
+    .setCustomId('service_ticket_category_select')
+    .setPlaceholder('Select a service…')
     .addOptions(
-      categories.map((cat) => ({
-        label: String(
-          cat.label || cat.id
-        ).slice(0, 100),
+      categories
+        .slice(0, 25)
+        .map((cat) => ({
+          label: String(cat.label || cat.id).slice(0, 100),
 
-        description: String(
-          cat.description || 'Open a service ticket'
-        ).slice(0, 100),
+          description: String(
+            cat.description || 'Open a service ticket'
+          ).slice(0, 100),
 
-        value: String(cat.id),
+          value: String(cat.id),
 
-        emoji:
-          cat.emoji || undefined,
-      }))
+          emoji: cat.emoji || undefined,
+        }))
     );
 
   await message
@@ -136,42 +141,45 @@ async function resetServiceTicketDropdown(message) {
         new ActionRowBuilder().addComponents(menu),
       ],
     })
-    .catch(() => {});
+    .catch((err) => {
+      console.error(
+        'Failed to reset service ticket dropdown:',
+        err
+      );
+    });
 }
 
 
-/* =========================
+/* =========================================================
    RESET APPLICATION DROPDOWN
-========================= */
+========================================================= */
 
 async function resetApplicationDropdown(message) {
-  const apps =
-    config.applications || [];
+  if (!message) return;
+
+  const apps = config.applications || [];
 
   if (!apps.length) return;
 
   const menu = new StringSelectMenuBuilder()
-    .setCustomId(
-      'application_select'
-    )
-    .setPlaceholder(
-      'Select an application…'
-    )
+    .setCustomId('application_select')
+    .setPlaceholder('Select an application…')
     .addOptions(
-      apps.map((app) => ({
-        label: String(
-          app.label || app.id
-        ).slice(0, 100),
+      apps
+        .slice(0, 25)
+        .map((app) => ({
+          label: String(
+            app.label || app.id
+          ).slice(0, 100),
 
-        description: String(
-          app.description || 'Apply here'
-        ).slice(0, 100),
+          description: String(
+            app.description || 'Apply here'
+          ).slice(0, 100),
 
-        value: String(app.id),
+          value: String(app.id),
 
-        emoji:
-          app.emoji || undefined,
-      }))
+          emoji: app.emoji || undefined,
+        }))
     );
 
   await message
@@ -180,17 +188,21 @@ async function resetApplicationDropdown(message) {
         new ActionRowBuilder().addComponents(menu),
       ],
     })
-    .catch(() => {});
+    .catch((err) => {
+      console.error(
+        'Failed to reset application dropdown:',
+        err
+      );
+    });
 }
 
 
-/* =========================
-   QUESTIONS MODAL
-========================= */
+/* =========================================================
+   BUILD TICKET QUESTIONS MODAL
+========================================================= */
 
 function buildQuestionsModal(category) {
-  const questions =
-    category.questions || [];
+  const questions = category.questions || [];
 
   const modal = new ModalBuilder()
     .setCustomId(
@@ -205,24 +217,17 @@ function buildQuestionsModal(category) {
   questions
     .slice(0, 5)
     .forEach((question, i) => {
-
-      const input =
-        new TextInputBuilder()
-          .setCustomId(
-            `q_${i}`
-          )
-          .setLabel(
-            String(question).slice(0, 45)
-          )
-          .setStyle(
-            TextInputStyle.Short
-          )
-          .setRequired(true)
-          .setMaxLength(200);
+      const input = new TextInputBuilder()
+        .setCustomId(`q_${i}`)
+        .setLabel(
+          String(question).slice(0, 45)
+        )
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setMaxLength(1000);
 
       modal.addComponents(
-        new ActionRowBuilder()
-          .addComponents(input)
+        new ActionRowBuilder().addComponents(input)
       );
     });
 
@@ -230,32 +235,36 @@ function buildQuestionsModal(category) {
 }
 
 
-/* =========================
-   FIND ANY TICKET CATEGORY
-========================= */
+/* =========================================================
+   FIND NORMAL OR SERVICE CATEGORY
+========================================================= */
 
 function findTicketCategory(categoryId) {
-  return (
-    (config.categories || [])
-      .find(
-        (category) =>
-          category.id === categoryId
-      )
-
-    ||
-
-    (config.serviceCategories || [])
-      .find(
-        (category) =>
-          category.id === categoryId
-      )
+  const normalCategory = (
+    config.categories || []
+  ).find(
+    (category) =>
+      String(category.id) === String(categoryId)
   );
+
+  if (normalCategory) {
+    return normalCategory;
+  }
+
+  const serviceCategory = (
+    config.serviceCategories || []
+  ).find(
+    (category) =>
+      String(category.id) === String(categoryId)
+  );
+
+  return serviceCategory || null;
 }
 
 
-/* =========================
-   MAIN EVENT
-========================= */
+/* =========================================================
+   MAIN INTERACTION EVENT
+========================================================= */
 
 module.exports = {
   name: 'interactionCreate',
@@ -272,13 +281,11 @@ module.exports = {
 
     try {
 
-      /* =========================
+      /* =====================================================
          SLASH COMMANDS
-      ========================= */
+      ===================================================== */
 
-      if (
-        interaction.isChatInputCommand()
-      ) {
+      if (interaction.isChatInputCommand()) {
 
         const command =
           interaction.client.commands.get(
@@ -287,17 +294,15 @@ module.exports = {
 
         if (!command) return;
 
-        await command.execute(
-          interaction
-        );
+        await command.execute(interaction);
 
         return;
       }
 
 
-      /* =========================
-         NORMAL + SERVICE TICKET SELECT
-      ========================= */
+      /* =====================================================
+         NORMAL / SERVICE TICKET DROPDOWNS
+      ===================================================== */
 
       if (
         interaction.isStringSelectMenu() &&
@@ -313,104 +318,113 @@ module.exports = {
         )
       ) {
 
-        const categoryId =
-          interaction.values[0];
+        const selectedCategoryId =
+          interaction.values?.[0];
+
+        if (!selectedCategoryId) {
+
+          return interaction.reply({
+            content:
+              '❌ No ticket category was selected.',
+            ephemeral: true,
+          });
+
+        }
 
         const category =
           findTicketCategory(
-            categoryId
+            selectedCategoryId
           );
 
         if (!category) {
+
+          if (
+            interaction.customId ===
+            'ticket_category_select'
+          ) {
+            await resetTicketDropdown(
+              interaction.message
+            );
+          } else {
+            await resetServiceTicketDropdown(
+              interaction.message
+            );
+          }
 
           return interaction.reply({
             content:
               '❌ That ticket category could not be found.',
             ephemeral: true,
           });
-
         }
 
 
-        /* =========================
-           QUESTIONS
-        ========================= */
+        /* =================================================
+           DETERMINE WHICH PANEL WAS USED
+        ================================================= */
 
-        if (
-          category.questions &&
-          category.questions.length
-        ) {
-
-          await interaction.showModal(
-            buildQuestionsModal(
-              category
-            )
-          );
-
-
-          if (
-            interaction.customId ===
-            'ticket_category_select'
-          ) {
-
-            await resetTicketDropdown(
-              interaction.message
-            );
-
-          }
-
-          else {
-
-            await resetServiceTicketDropdown(
-              interaction.message
-            );
-
-          }
-
-          return;
-        }
-
-
-        /* =========================
-           CREATE TICKET
-        ========================= */
-
-        await createTicket(
-          interaction,
-          categoryId
-        );
-
-
-        /* =========================
-           RESET CORRECT PANEL
-        ========================= */
-
-        if (
+        const isServicePanel =
           interaction.customId ===
-          'ticket_category_select'
-        ) {
+            'service_ticket_category_select' ||
+          interaction.customId ===
+            'service_ticket_select';
 
-          await resetTicketDropdown(
-            interaction.message
-          );
 
-        }
+        /* =================================================
+           RESET PANEL IMMEDIATELY
+           
+           This is important because Discord select menus
+           visually keep the selected value until the
+           original message is edited.
+        ================================================= */
 
-        else {
+        if (isServicePanel) {
 
           await resetServiceTicketDropdown(
             interaction.message
           );
 
+        } else {
+
+          await resetTicketDropdown(
+            interaction.message
+          );
         }
+
+
+        /* =================================================
+           CATEGORY HAS QUESTIONS
+        ================================================= */
+
+        if (
+          Array.isArray(category.questions) &&
+          category.questions.length > 0
+        ) {
+
+          await interaction.showModal(
+            buildQuestionsModal(category)
+          );
+
+          return;
+        }
+
+
+        /* =================================================
+           CATEGORY HAS NO QUESTIONS
+        ================================================= */
+
+        await createTicket(
+          interaction,
+          selectedCategoryId
+        );
 
         return;
       }
 
 
-      /* =========================
-         DM APPLICATION QUESTION MODAL
-      ========================= */
+      /* =====================================================
+         APPLICATION DM QUESTION MODAL
+      ===================================================== */
 
       if (
         interaction.isModalSubmit() &&
@@ -427,9 +441,9 @@ module.exports = {
       }
 
 
-      /* =========================
-         TICKET QUESTIONS MODAL
-      ========================= */
+      /* =====================================================
+         NORMAL / SERVICE TICKET QUESTIONS MODAL
+      ===================================================== */
 
       if (
         interaction.isModalSubmit() &&
@@ -445,9 +459,7 @@ module.exports = {
           );
 
         const category =
-          findTicketCategory(
-            categoryId
-          );
+          findTicketCategory(categoryId);
 
         if (!category) {
 
@@ -456,25 +468,23 @@ module.exports = {
               '❌ Unknown ticket category.',
             ephemeral: true,
           });
-
         }
 
+        const questions =
+          Array.isArray(category.questions)
+            ? category.questions.slice(0, 5)
+            : [];
 
-        const answers =
-          (category.questions || [])
-            .slice(0, 5)
-            .map(
-              (question, i) => ({
-                question,
+        const answers = questions.map(
+          (question, i) => ({
+            question,
 
-                answer:
-                  interaction.fields
-                    .getTextInputValue(
-                      `q_${i}`
-                    ),
-              })
-            );
-
+            answer:
+              interaction.fields.getTextInputValue(
+                `q_${i}`
+              ),
+          })
+        );
 
         await createTicket(
           interaction,
@@ -486,9 +496,9 @@ module.exports = {
       }
 
 
-      /* =========================
+      /* =====================================================
          STAFF TRACKER SELECT
-      ========================= */
+      ===================================================== */
 
       if (
         interaction.isUserSelectMenu() &&
@@ -501,8 +511,7 @@ module.exports = {
         const results = [];
 
         for (
-          const userId of
-            interaction.values
+          const userId of interaction.values
         ) {
 
           const created =
@@ -520,7 +529,6 @@ module.exports = {
           );
         }
 
-
         await interaction.editReply({
           content:
             `Staff tracker setup:\n${results.join(
@@ -534,9 +542,9 @@ module.exports = {
       }
 
 
-      /* =========================
+      /* =====================================================
          APPLICATION SELECT
-      ========================= */
+      ===================================================== */
 
       if (
         interaction.isStringSelectMenu() &&
@@ -545,15 +553,31 @@ module.exports = {
       ) {
 
         const appId =
-          interaction.values[0];
+          interaction.values?.[0];
+
+        if (!appId) {
+
+          await resetApplicationDropdown(
+            interaction.message
+          );
+
+          return interaction.reply({
+            content:
+              '❌ No application was selected.',
+            ephemeral: true,
+          });
+        }
 
         const appConfig =
-          (config.applications || [])
-            .find(
-              (a) =>
-                a.id === appId
-            );
+          (config.applications || []).find(
+            (app) =>
+              String(app.id) ===
+              String(appId)
+          );
 
+        /* =================================================
+           INVALID APPLICATION
+        ================================================= */
 
         if (!appConfig) {
 
@@ -568,6 +592,10 @@ module.exports = {
           });
         }
 
+
+        /* =================================================
+           CHECK PENDING APPLICATION
+        ================================================= */
 
         if (
           hasApplied(
@@ -588,10 +616,22 @@ module.exports = {
         }
 
 
+        /* =================================================
+           RESET APPLICATION PANEL
+           
+           This happens BEFORE attempting the DM.
+           Therefore the dropdown never gets stuck on the
+           user's previous selection.
+        ================================================= */
+
         await resetApplicationDropdown(
           interaction.message
         );
 
+
+        /* =================================================
+           SEND APPLICATION TO DMS
+        ================================================= */
 
         const started =
           await startDmApplication(
@@ -602,38 +642,42 @@ module.exports = {
           );
 
 
+        /* =================================================
+           DM FAILED
+        ================================================= */
+
         if (!started) {
 
           return interaction.reply({
             content:
-              "❌ I couldn't DM you. Please enable direct messages from server members and try again.",
+              "❌ I couldn't DM you. Please enable **Direct Messages from server members** and try again.",
             ephemeral: true,
           });
-
         }
 
+
+        /* =================================================
+           DM SENT
+        ================================================= */
 
         return interaction.reply({
           content:
             '📬 Check your DMs to fill out the application!',
-
           ephemeral: true,
         });
       }
 
 
-      /* =========================
+      /* =====================================================
          BUTTONS
-      ========================= */
+      ===================================================== */
 
-      if (
-        interaction.isButton()
-      ) {
+      if (interaction.isButton()) {
 
 
-        /* =========================
+        /* =================================================
            DM APPLICATION START
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId.startsWith(
@@ -641,7 +685,7 @@ module.exports = {
           )
         ) {
 
-          const appId =
+          const applicationData =
             interaction.customId.replace(
               'dmapp_start_',
               ''
@@ -649,16 +693,16 @@ module.exports = {
 
           await handleDmApplicationStart(
             interaction,
-            appId
+            applicationData
           );
 
           return;
         }
 
 
-        /* =========================
+        /* =================================================
            DM APPLICATION CANCEL
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId.startsWith(
@@ -666,7 +710,7 @@ module.exports = {
           )
         ) {
 
-          const appId =
+          const applicationData =
             interaction.customId.replace(
               'dmapp_cancel_',
               ''
@@ -674,16 +718,16 @@ module.exports = {
 
           await handleDmApplicationCancel(
             interaction,
-            appId
+            applicationData
           );
 
           return;
         }
 
 
-        /* =========================
+        /* =================================================
            VOUCH NO
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId.startsWith(
@@ -700,14 +744,12 @@ module.exports = {
           const [
             requesterId,
             optionValue,
-          ] =
-            rest.split('|');
+          ] = rest.split('|');
 
           const optionLabel =
             OPTION_LABELS[
               optionValue
-            ] ||
-            optionValue;
+            ] || optionValue;
 
 
           await interaction.update({
@@ -716,9 +758,7 @@ module.exports = {
                 .setDescription(
                   'No worries — thanks for letting us know!'
                 )
-                .setColor(
-                  '#ED4245'
-                ),
+                .setColor('#ED4245'),
             ],
 
             components: [],
@@ -728,77 +768,49 @@ module.exports = {
           const logChannelId =
             config.vouchLogChannelId;
 
-
           if (
             logChannelId &&
-            !logChannelId.startsWith(
-              'PUT_'
-            )
+            !logChannelId.startsWith('PUT_')
           ) {
 
             const logChannel =
-              await interaction.client
-                .channels
-                .fetch(
-                  logChannelId
-                )
-                .catch(
-                  () => null
-                );
-
+              await interaction.client.channels
+                .fetch(logChannelId)
+                .catch(() => null);
 
             if (logChannel) {
 
               const logEmbed =
                 new EmbedBuilder()
-                  .setTitle(
-                    'Vouch Declined'
-                  )
+                  .setTitle('Vouch Declined')
                   .addFields(
                     {
                       name: 'From',
-
                       value:
                         `${interaction.user.tag} (${interaction.user.id})`,
-
                       inline: true,
                     },
-
                     {
-                      name:
-                        'Requested by',
-
+                      name: 'Requested by',
                       value:
                         `<@${requesterId}>`,
-
                       inline: true,
                     },
-
                     {
-                      name:
-                        'Category',
-
+                      name: 'Category',
                       value:
                         optionLabel,
-
                       inline: true,
                     }
                   )
-                  .setColor(
-                    '#ED4245'
-                  )
+                  .setColor('#ED4245')
                   .setTimestamp();
-
 
               await logChannel
                 .send({
-                  embeds: [
-                    logEmbed,
-                  ],
+                  embeds: [logEmbed],
                 })
-                .catch(
-                  () => {}
-                );
+                .catch(() => {});
             }
           }
 
@@ -806,9 +818,9 @@ module.exports = {
         }
 
 
-        /* =========================
+        /* =================================================
            VOUCH YES
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId.startsWith(
@@ -825,9 +837,7 @@ module.exports = {
           const [
             requesterId,
             optionValue,
-          ] =
-            rest.split('|');
-
+          ] = rest.split('|');
 
           await interaction.update({
             embeds: [
@@ -835,9 +845,7 @@ module.exports = {
                 .setDescription(
                   'Awesome! How many stars would you like to give? (1-5)'
                 )
-                .setColor(
-                  '#5865F2'
-                ),
+                .setColor('#5865F2'),
             ],
 
             components: [
@@ -852,9 +860,9 @@ module.exports = {
         }
 
 
-        /* =========================
+        /* =================================================
            VOUCH STARS
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId.startsWith(
@@ -872,9 +880,7 @@ module.exports = {
             requesterId,
             optionValue,
             stars,
-          ] =
-            rest.split('|');
-
+          ] = rest.split('|');
 
           const modal =
             new ModalBuilder()
@@ -884,7 +890,6 @@ module.exports = {
               .setTitle(
                 'Leave a Comment'
               );
-
 
           const commentInput =
             new TextInputBuilder()
@@ -900,14 +905,11 @@ module.exports = {
               .setRequired(false)
               .setMaxLength(500);
 
-
           modal.addComponents(
-            new ActionRowBuilder()
-              .addComponents(
-                commentInput
-              )
+            new ActionRowBuilder().addComponents(
+              commentInput
+            )
           );
-
 
           await interaction.showModal(
             modal
@@ -917,9 +919,9 @@ module.exports = {
         }
 
 
-        /* =========================
+        /* =================================================
            GIVEAWAY JOIN
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId ===
@@ -934,7 +936,6 @@ module.exports = {
               interaction.message.id
             ];
 
-
           if (
             !giveaway ||
             giveaway.ended
@@ -945,9 +946,7 @@ module.exports = {
                 'This giveaway has ended.',
               ephemeral: true,
             });
-
           }
-
 
           if (
             !Array.isArray(
@@ -957,7 +956,6 @@ module.exports = {
             giveaway.entrants = [];
           }
 
-
           const userId =
             interaction.user.id;
 
@@ -965,7 +963,6 @@ module.exports = {
             giveaway.entrants.indexOf(
               userId
             );
-
 
           if (idx === -1) {
 
@@ -977,16 +974,13 @@ module.exports = {
               giveaways
             );
 
-
             await interaction.reply({
               content:
                 '🎉 You entered the giveaway!',
               ephemeral: true,
             });
 
-          }
-
-          else {
+          } else {
 
             giveaway.entrants.splice(
               idx,
@@ -997,15 +991,12 @@ module.exports = {
               giveaways
             );
 
-
             await interaction.reply({
               content:
                 'You left the giveaway.',
               ephemeral: true,
             });
-
           }
-
 
           const updatedEmbed =
             buildGiveawayEmbed(
@@ -1015,24 +1006,21 @@ module.exports = {
               giveaway.entrants.length
             );
 
-
           await interaction.message
             .edit({
               embeds: [
                 updatedEmbed,
               ],
             })
-            .catch(
-              () => {}
-            );
+            .catch(() => {});
 
           return;
         }
 
 
-        /* =========================
+        /* =================================================
            REACTION ROLES
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId.startsWith(
@@ -1049,22 +1037,14 @@ module.exports = {
           const member =
             interaction.member;
 
-
           await interaction.deferReply({
             ephemeral: true,
           });
 
-
           const role =
-            await interaction.guild
-              .roles
-              .fetch(
-                roleId
-              )
-              .catch(
-                () => null
-              );
-
+            await interaction.guild.roles
+              .fetch(roleId)
+              .catch(() => null);
 
           if (!role) {
 
@@ -1072,9 +1052,7 @@ module.exports = {
               content:
                 '❌ That role no longer exists.',
             });
-
           }
-
 
           const configEntry =
             (
@@ -1082,10 +1060,8 @@ module.exports = {
               []
             ).find(
               (r) =>
-                r.roleId ===
-                roleId
+                r.roleId === roleId
             );
-
 
           const displayName =
             configEntry?.label ||
@@ -1109,9 +1085,7 @@ module.exports = {
                   `Removed the **${displayName}** role.`,
               });
 
-            }
-
-            catch (err) {
+            } catch (err) {
 
               console.error(
                 `Failed to remove role ${roleId}:`,
@@ -1122,12 +1096,9 @@ module.exports = {
                 content:
                   `❌ I couldn't remove the **${displayName}** role — check that my bot role is above it.`,
               });
-
             }
 
-          }
-
-          else {
+          } else {
 
             try {
 
@@ -1140,9 +1111,7 @@ module.exports = {
                   `Gave you the **${displayName}** role!`,
               });
 
-            }
-
-            catch (err) {
+            } catch (err) {
 
               console.error(
                 `Failed to add role ${roleId}:`,
@@ -1153,7 +1122,6 @@ module.exports = {
                 content:
                   `❌ I couldn't give you the **${displayName}** role — check that my bot role is above it.`,
               });
-
             }
           }
 
@@ -1161,9 +1129,9 @@ module.exports = {
         }
 
 
-        /* =========================
+        /* =================================================
            TICKET CLAIM
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId ===
@@ -1178,9 +1146,9 @@ module.exports = {
         }
 
 
-        /* =========================
+        /* =================================================
            TICKET CLOSE
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId ===
@@ -1196,9 +1164,9 @@ module.exports = {
         }
 
 
-        /* =========================
+        /* =================================================
            CLOSE WITH REASON
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId ===
@@ -1213,7 +1181,6 @@ module.exports = {
               .setTitle(
                 'Close Ticket'
               );
-
 
           const reasonInput =
             new TextInputBuilder()
@@ -1232,14 +1199,11 @@ module.exports = {
               .setRequired(true)
               .setMaxLength(500);
 
-
           modal.addComponents(
-            new ActionRowBuilder()
-              .addComponents(
-                reasonInput
-              )
+            new ActionRowBuilder().addComponents(
+              reasonInput
+            )
           );
-
 
           await interaction.showModal(
             modal
@@ -1249,9 +1213,9 @@ module.exports = {
         }
 
 
-        /* =========================
+        /* =================================================
            APPLICATION ACCEPT / DENY
-        ========================= */
+        ================================================= */
 
         if (
           interaction.customId.startsWith(
@@ -1267,12 +1231,10 @@ module.exports = {
               'app_accept_'
             );
 
-
           const prefix =
             isAccept
               ? 'app_accept_'
               : 'app_deny_';
-
 
           const rest =
             interaction.customId.replace(
@@ -1280,21 +1242,17 @@ module.exports = {
               ''
             );
 
-
           /*
-            Application button format:
+            Format:
 
             app_accept_USERID_APPID
             app_deny_USERID_APPID
 
-            Split at the first underscore
-            so application IDs can contain
-            underscores.
+            Split only at the FIRST underscore.
           */
 
           const separator =
             rest.indexOf('_');
-
 
           if (
             separator === -1
@@ -1305,9 +1263,7 @@ module.exports = {
                 '❌ Invalid application button.',
               ephemeral: true,
             });
-
           }
-
 
           const applicantId =
             rest.slice(
@@ -1315,12 +1271,15 @@ module.exports = {
               separator
             );
 
-
           const appId =
             rest.slice(
               separator + 1
             );
 
+
+          /* =================================================
+             STAFF CHECK
+          ================================================= */
 
           if (
             !interaction.member ||
@@ -1334,19 +1293,22 @@ module.exports = {
                 'Only staff can accept or deny applications.',
               ephemeral: true,
             });
-
           }
 
+
+          /* =================================================
+             APPLICATION CONFIG
+          ================================================= */
 
           const appConfig =
             (
               config.applications ||
               []
             ).find(
-              (a) =>
-                a.id === appId
+              (app) =>
+                String(app.id) ===
+                String(appId)
             );
-
 
           const label =
             appConfig
@@ -1354,10 +1316,13 @@ module.exports = {
               : 'Application';
 
 
+          /* =================================================
+             GET ORIGINAL EMBED
+          ================================================= */
+
           const originalEmbed =
             interaction.message
               .embeds[0];
-
 
           if (!originalEmbed) {
 
@@ -1366,15 +1331,16 @@ module.exports = {
                 '❌ Could not find the application embed.',
               ephemeral: true,
             });
-
           }
 
 
+          /* =================================================
+             UPDATE APPLICATION
+          ================================================= */
+
           const updatedEmbed =
             EmbedBuilder
-              .from(
-                originalEmbed
-              )
+              .from(originalEmbed)
               .setColor(
                 isAccept
                   ? '#57F287'
@@ -1407,22 +1373,24 @@ module.exports = {
           });
 
 
+          /* =================================================
+             CLEAR PENDING APPLICATION
+          ================================================= */
+
           clearApplied(
             applicantId,
             appId
           );
 
 
-          const applicant =
-            await interaction.guild
-              .members
-              .fetch(
-                applicantId
-              )
-              .catch(
-                () => null
-              );
+          /* =================================================
+             DM APPLICANT
+          ================================================= */
 
+          const applicant =
+            await interaction.client.users
+              .fetch(applicantId)
+              .catch(() => null);
 
           if (applicant) {
 
@@ -1432,10 +1400,12 @@ module.exports = {
                   ? `🎉 Your **${label}** application in **${interaction.guild.name}** was accepted!`
                   : `Your **${label}** application in **${interaction.guild.name}** was denied.`
               )
-              .catch(
-                () => {}
-              );
-
+              .catch((err) => {
+                console.error(
+                  `Could not DM applicant ${applicantId}:`,
+                  err.message
+                );
+              });
           }
 
           return;
@@ -1443,9 +1413,9 @@ module.exports = {
       }
 
 
-      /* =========================
+      /* =====================================================
          CLOSE REASON MODAL
-      ========================= */
+      ===================================================== */
 
       if (
         interaction.isModalSubmit() &&
@@ -1459,7 +1429,6 @@ module.exports = {
               'close_reason_input'
             );
 
-
         await closeTicket(
           interaction,
           reason
@@ -1469,9 +1438,9 @@ module.exports = {
       }
 
 
-      /* =========================
+      /* =====================================================
          VOUCH COMMENT MODAL
-      ========================= */
+      ===================================================== */
 
       if (
         interaction.isModalSubmit() &&
@@ -1486,14 +1455,11 @@ module.exports = {
             ''
           );
 
-
         const [
           requesterId,
           optionValue,
           stars,
-        ] =
-          rest.split('|');
-
+        ] = rest.split('|');
 
         const comment =
           interaction.fields
@@ -1502,20 +1468,17 @@ module.exports = {
             ) ||
           'No comment left.';
 
-
         const optionLabel =
           OPTION_LABELS[
             optionValue
           ] ||
           optionValue;
 
-
         const starsNum =
           parseInt(
             stars,
             10
           );
-
 
         const safeStars =
           Math.max(
@@ -1529,7 +1492,6 @@ module.exports = {
                 : starsNum
             )
           );
-
 
         const starDisplay =
           '⭐'.repeat(
@@ -1558,7 +1520,6 @@ module.exports = {
         const vouchChannelId =
           config.vouchChannelId;
 
-
         if (
           vouchChannelId &&
           !vouchChannelId.startsWith(
@@ -1567,8 +1528,7 @@ module.exports = {
         ) {
 
           const vouchChannel =
-            await interaction.client
-              .channels
+            await interaction.client.channels
               .fetch(
                 vouchChannelId
               )
@@ -1576,19 +1536,16 @@ module.exports = {
                 () => null
               );
 
-
           if (vouchChannel) {
 
             const requester =
-              await interaction.client
-                .users
+              await interaction.client.users
                 .fetch(
                   requesterId
                 )
                 .catch(
                   () => null
                 );
-
 
             const vouchEmbed =
               new EmbedBuilder()
@@ -1665,15 +1622,12 @@ module.exports = {
         return;
       }
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
       console.error(
         'Error handling interaction:',
         err
       );
-
 
       try {
 
@@ -1688,21 +1642,16 @@ module.exports = {
             ephemeral: true,
           });
 
-        }
-
-        else {
+        } else {
 
           await interaction.reply({
             content:
               '❌ Something went wrong handling that action.',
             ephemeral: true,
           });
-
         }
 
-      }
-
-      catch (_) {}
+      } catch (_) {}
     }
   },
 };
